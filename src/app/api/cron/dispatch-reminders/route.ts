@@ -11,6 +11,24 @@ import {
 } from "@/lib/data/reminders";
 
 export const dynamic = "force-dynamic";
+// Teto de execucao da Vercel para essa rota — o espacamento entre envios
+// (ver DELAY_*) precisa caber dentro desse tempo. Se o volume diario crescer
+// a ponto de estourar esse limite, a solucao e rodar o cron com mais
+// frequencia (lotes menores) em vez de aumentar isso indefinidamente.
+export const maxDuration = 60;
+
+// Espera um intervalo aleatorio entre cada disparo pra nao parecer atividade
+// de robo pro WhatsApp e nao estourar limite de taxa da Z-API.
+const DELAY_MIN_MS = 2000;
+const DELAY_MAX_MS = 4000;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function randomDelay() {
+  return DELAY_MIN_MS + Math.random() * (DELAY_MAX_MS - DELAY_MIN_MS);
+}
 
 function isAuthorized(request: NextRequest): boolean {
   const expected = process.env.CRON_SECRET;
@@ -34,6 +52,7 @@ export async function GET(request: NextRequest) {
   const dueContacts = await getDueContacts(today);
 
   const results: { contactId: string; status: "sent" | "failed" | "skipped" }[] = [];
+  let dispatchCount = 0;
 
   for (const contact of dueContacts) {
     const alreadySent = await hasDispatchToday(contact.id, today);
@@ -47,6 +66,12 @@ export async function GET(request: NextRequest) {
       results.push({ contactId: contact.id, status: "failed" });
       continue;
     }
+
+    // espaca os envios reais (nao os pulados) pra nao disparar tudo em rajada
+    if (dispatchCount > 0) {
+      await sleep(randomDelay());
+    }
+    dispatchCount += 1;
 
     const templateBody =
       contact.contact_type === "lead" && contact.attempt_stage
