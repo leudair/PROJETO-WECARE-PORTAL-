@@ -48,9 +48,24 @@ function parseIncoming(body: Record<string, unknown>): IncomingMessage | null {
   return { senderPhone, text, referenceMessageId };
 }
 
-function normalizePhone(phone: string): string {
+// Numeros de celular brasileiros ganharam um "9" extra apos o DDD ha alguns
+// anos, mas o WhatsApp as vezes devolve o numero sem ele. Sem isso, um
+// numero cadastrado com 9 nunca bateria com o que a Z-API manda no webhook.
+function phoneVariants(phone: string): string[] {
   const digits = phone.replace(/\D/g, "");
-  return `+${digits}`;
+  const variants = new Set([digits]);
+
+  if (digits.startsWith("55") && digits.length >= 12) {
+    const prefix = digits.slice(0, 4); // "55" + DDD
+    const rest = digits.slice(4);
+    if (rest.length === 9 && rest[0] === "9") {
+      variants.add(prefix + rest.slice(1));
+    } else if (rest.length === 8) {
+      variants.add(prefix + "9" + rest);
+    }
+  }
+
+  return [...variants].map((d) => `+${d}`);
 }
 
 export async function POST(request: NextRequest) {
@@ -81,7 +96,7 @@ export async function POST(request: NextRequest) {
     const { data: employee, error: employeeError } = await admin
       .from("profiles")
       .select("id")
-      .eq("whatsapp_number", normalizePhone(incoming.senderPhone))
+      .in("whatsapp_number", phoneVariants(incoming.senderPhone))
       .maybeSingle();
 
     if (employeeError) {
