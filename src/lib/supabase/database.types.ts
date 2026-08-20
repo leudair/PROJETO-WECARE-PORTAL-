@@ -92,6 +92,8 @@ export interface Database {
           zapi_message_id: string | null;
           replied_at: string | null;
           status: DispatchStatus;
+          confirmation_code: string | null;
+          flagged_suspicious: boolean;
           created_at: string;
         };
         Insert: {
@@ -103,6 +105,8 @@ export interface Database {
           zapi_message_id?: string | null;
           replied_at?: string | null;
           status?: DispatchStatus;
+          confirmation_code?: string | null;
+          flagged_suspicious?: boolean;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["reminder_dispatches"]["Insert"]>;

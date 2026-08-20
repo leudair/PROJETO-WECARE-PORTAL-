@@ -184,6 +184,14 @@ export default async function AdminOverviewPage({
                       ({unansweredStreak}x sem resposta)
                     </span>
                   )}
+                  {latestDispatch?.flagged_suspicious && (
+                    <span
+                      title="Confirmado rápido demais pra ser plausível — vale checar de verdade"
+                      className="ml-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300"
+                    >
+                      ⚠️ confirmação suspeita
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}

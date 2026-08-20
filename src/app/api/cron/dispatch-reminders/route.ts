@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import { sendWhatsAppText } from "@/lib/zapi/client";
 import {
   buildReminderText,
+  generateConfirmationCode,
   getDueContacts,
   getTemplateBody,
   hasDispatchToday,
@@ -78,7 +79,8 @@ export async function GET(request: NextRequest) {
         ? await getTemplateBody(contact.attempt_stage)
         : null;
 
-    const text = buildReminderText(contact, templateBody);
+    const confirmationCode = generateConfirmationCode();
+    const text = buildReminderText(contact, templateBody, confirmationCode);
 
     try {
       const { zapiMessageId } = await sendWhatsAppText(owner.whatsapp_number, text);
@@ -88,6 +90,7 @@ export async function GET(request: NextRequest) {
         scheduledFor: today,
         zapiMessageId,
         status: "sent",
+        confirmationCode,
       });
       results.push({ contactId: contact.id, status: "sent" });
     } catch (err) {
@@ -97,6 +100,7 @@ export async function GET(request: NextRequest) {
         scheduledFor: today,
         zapiMessageId: null,
         status: "failed",
+        confirmationCode: null,
       });
       results.push({ contactId: contact.id, status: "failed" });
       console.error(`Falha ao disparar lembrete ${contact.id}:`, err);

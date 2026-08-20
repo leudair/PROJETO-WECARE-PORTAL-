@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { SECONDS_PER_CONTACT_MIN } from "@/lib/data/reminders";
 
 export const dynamic = "force-dynamic";
 
@@ -15,24 +16,41 @@ function isAuthorized(request: NextRequest): boolean {
   return timingSafeEqual(a, b);
 }
 
+// Ex: "K7B2Q9" — ver CODE_ALPHABET em src/lib/data/reminders.ts (sem 0/O/1/I/L)
+const CODE_PATTERN = /[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}/i;
+
+interface IncomingMessage {
+  senderPhone: string | null;
+  text: string | null;
+  referenceMessageId: string | null;
+}
+
 // A Z-API nao documenta um formato unico e estavel para o payload de
-// "mensagem recebida" entre contas/versoes. Isto tenta cobrir os formatos
-// mais comuns, mas o payload REAL deve ser conferido nos logs (Vercel)
-// na primeira mensagem de teste e este parser ajustado se necessario.
-function parseReply(body: Record<string, unknown>): { quotedMessageId: string | null } | null {
-  // eventos que nao sao "mensagem recebida" (ex: status de entrega) sao ignorados
+// "mensagem recebida" entre contas/versoes. Confirmado nos logs de producao
+// em 2026-08-20: mensagens diretas trazem o telefone em `phone`, mensagens
+// de grupo em `participantPhone` (que ignoramos — confirmacao so vale 1:1).
+function parseIncoming(body: Record<string, unknown>): IncomingMessage | null {
   const type = (body.type as string | undefined) ?? (body.event as string | undefined);
   if (type && !/message|receivedcallback/i.test(type)) return null;
+  if (body.fromMe === true) return null;
+  if (body.isGroup === true) return null;
 
-  const message = (body.message as Record<string, unknown> | undefined) ?? body;
+  const text =
+    ((body.text as Record<string, unknown> | undefined)?.message as string | undefined) ?? null;
 
-  const quotedMessageId =
-    (message?.referenceMessageId as string | undefined) ??
-    ((message?.contextInfo as Record<string, unknown> | undefined)?.stanzaId as string | undefined) ??
-    ((body?.contextInfo as Record<string, unknown> | undefined)?.stanzaId as string | undefined) ??
+  const senderPhone = (body.phone as string | undefined) ?? null;
+
+  const referenceMessageId =
+    (body.referenceMessageId as string | undefined) ??
+    ((body.contextInfo as Record<string, unknown> | undefined)?.stanzaId as string | undefined) ??
     null;
 
-  return { quotedMessageId };
+  return { senderPhone, text, referenceMessageId };
+}
+
+function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  return `+${digits}`;
 }
 
 export async function POST(request: NextRequest) {
@@ -47,32 +65,126 @@ export async function POST(request: NextRequest) {
 
   console.log("Z-API webhook payload:", JSON.stringify(body));
 
-  const parsed = parseReply(body);
-  if (!parsed?.quotedMessageId) {
-    // aceita o webhook (200) mas nao ha o que correlacionar — evita retries infinitos da Z-API
+  const incoming = parseIncoming(body);
+  if (!incoming?.text) {
     return NextResponse.json({ ok: true, matched: false });
   }
 
   const admin = createAdminClient();
+  const trimmedText = incoming.text.trim();
 
-  const { data: dispatch, error: findError } = await admin
-    .from("reminder_dispatches")
-    .select("id, contact_id")
-    .eq("zapi_message_id", parsed.quotedMessageId)
-    .maybeSingle();
+  if (trimmedText.toUpperCase() === "TUDO") {
+    if (!incoming.senderPhone) {
+      return NextResponse.json({ ok: true, matched: false });
+    }
 
-  if (findError) {
-    console.error("Erro ao buscar dispatch pelo zapi_message_id:", findError);
-    return new NextResponse("Internal error", { status: 500 });
+    const { data: employee, error: employeeError } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("whatsapp_number", normalizePhone(incoming.senderPhone))
+      .maybeSingle();
+
+    if (employeeError) {
+      console.error("Erro ao buscar funcionario pelo telefone:", employeeError);
+      return new NextResponse("Internal error", { status: 500 });
+    }
+    if (!employee) {
+      return NextResponse.json({ ok: true, matched: false });
+    }
+
+    const { data: pending, error: pendingError } = await admin
+      .from("reminder_dispatches")
+      .select("id, contact_id, sent_at")
+      .eq("employee_id", employee.id)
+      .eq("status", "sent");
+
+    if (pendingError) {
+      console.error("Erro ao buscar disparos pendentes:", pendingError);
+      return new NextResponse("Internal error", { status: 500 });
+    }
+    if (!pending || pending.length === 0) {
+      return NextResponse.json({ ok: true, matched: false });
+    }
+
+    const now = Date.now();
+    const earliestSentAt = Math.min(...pending.map((d) => new Date(d.sent_at ?? now).getTime()));
+    const elapsedSeconds = (now - earliestSentAt) / 1000;
+    const expectedMinSeconds = pending.length * SECONDS_PER_CONTACT_MIN;
+    const suspicious = elapsedSeconds < expectedMinSeconds;
+
+    const dispatchIds = pending.map((d) => d.id);
+    const contactIds = [...new Set(pending.map((d) => d.contact_id))];
+
+    const { error: updateDispatchesError } = await admin
+      .from("reminder_dispatches")
+      .update({ status: "replied", replied_at: new Date().toISOString(), flagged_suspicious: suspicious })
+      .in("id", dispatchIds);
+
+    if (updateDispatchesError) {
+      console.error("Erro ao confirmar disparos em lote:", updateDispatchesError);
+      return new NextResponse("Internal error", { status: 500 });
+    }
+
+    const { error: updateContactsError } = await admin
+      .from("contacts")
+      .update({ status: "done" })
+      .in("id", contactIds);
+
+    if (updateContactsError) {
+      console.error("Erro ao atualizar contatos em lote:", updateContactsError);
+      return new NextResponse("Internal error", { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, matched: true, bulk: true, count: dispatchIds.length, suspicious });
+  }
+
+  // confirmacao individual por codigo
+  const codeMatch = trimmedText.match(CODE_PATTERN);
+  let dispatch: { id: string; contact_id: string; sent_at: string | null } | null = null;
+
+  if (codeMatch) {
+    const code = codeMatch[0].toUpperCase();
+    const { data, error } = await admin
+      .from("reminder_dispatches")
+      .select("id, contact_id, sent_at")
+      .eq("confirmation_code", code)
+      .eq("status", "sent")
+      .maybeSingle();
+
+    if (error) {
+      console.error("Erro ao buscar dispatch pelo codigo:", error);
+      return new NextResponse("Internal error", { status: 500 });
+    }
+    dispatch = data;
+  }
+
+  // fallback: resposta citando a mensagem original (quando o cliente WhatsApp propaga isso corretamente)
+  if (!dispatch && incoming.referenceMessageId) {
+    const { data, error } = await admin
+      .from("reminder_dispatches")
+      .select("id, contact_id, sent_at")
+      .eq("zapi_message_id", incoming.referenceMessageId)
+      .eq("status", "sent")
+      .maybeSingle();
+
+    if (error) {
+      console.error("Erro ao buscar dispatch pelo zapi_message_id:", error);
+      return new NextResponse("Internal error", { status: 500 });
+    }
+    dispatch = data;
   }
 
   if (!dispatch) {
+    // aceita o webhook (200) mas nao ha o que correlacionar — evita retries infinitos da Z-API
     return NextResponse.json({ ok: true, matched: false });
   }
 
+  const elapsedSeconds = (Date.now() - new Date(dispatch.sent_at ?? Date.now()).getTime()) / 1000;
+  const suspicious = elapsedSeconds < SECONDS_PER_CONTACT_MIN;
+
   const { error: updateDispatchError } = await admin
     .from("reminder_dispatches")
-    .update({ status: "replied", replied_at: new Date().toISOString() })
+    .update({ status: "replied", replied_at: new Date().toISOString(), flagged_suspicious: suspicious })
     .eq("id", dispatch.id);
 
   if (updateDispatchError) {
@@ -90,5 +202,5 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Internal error", { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, matched: true });
+  return NextResponse.json({ ok: true, matched: true, suspicious });
 }
