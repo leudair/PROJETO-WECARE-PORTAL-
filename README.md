@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WeCare Portal
 
-## Getting Started
+Sistema interno de lembrete de follow-up via WhatsApp. Um funcionário cadastra um cliente/lead com uma data de retorno; no dia marcado, o sistema manda um lembrete para o WhatsApp do PRÓPRIO funcionário (não do cliente) com uma sugestão de mensagem para copiar e colar. Se ele não confirmar (respondendo a mensagem), o lembrete repete no dia seguinte. O admin acompanha tudo em um painel central.
 
-First, run the development server:
+## Stack
+
+Next.js 16 (App Router) + React 19 + TypeScript + Tailwind 4 + Supabase (auth + Postgres com RLS) + Z-API (disparo de WhatsApp).
+
+## Rodando localmente
 
 ```bash
+npm install
+cp .env.example .env.local   # preencher com as credenciais abaixo
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 1. Criar o projeto Supabase
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Acesse [supabase.com](https://supabase.com), crie um projeto **novo** (não reaproveitar o do WeCare Bio Boost — este app deve ficar isolado).
+2. Em **Settings > API**, copie `Project URL` e a chave `anon public` para `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+3. Copie também a chave `service_role` (fica em **Settings > API > Project API keys**) para `SUPABASE_SERVICE_ROLE_KEY` — **nunca** exponha essa chave no client, ela ignora toda a segurança (RLS).
+4. Aplique a migração `supabase/migrations/0001_init.sql`: cole o conteúdo no **SQL Editor** do painel Supabase e rode. Isso cria as tabelas, os índices e as políticas de RLS (cada funcionário só vê o que cadastrou; admin vê tudo; o histórico de disparo/resposta é visível só para admin).
+5. Crie a **primeira conta de admin** manualmente pelo SQL Editor, depois de criar o usuário em **Authentication > Users > Add user**:
+   ```sql
+   insert into public.profiles (id, full_name, whatsapp_number, role)
+   values ('<uuid do usuário criado>', 'Seu nome', '+55...', 'admin');
+   ```
+   As contas de funcionário depois são criadas direto pelo painel admin (`/admin/employees`), sem precisar mexer no Supabase.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 2. Criar a instância Z-API
 
-## Learn More
+1. Crie a conta em [z-api.io](https://z-api.io) e uma instância nova.
+2. Conecte o **número de WhatsApp da empresa** escaneando o QR Code exibido no painel da instância (use o celular com esse número).
+3. Na página da instância, copie **Instance ID** e **Token** para `ZAPI_INSTANCE_ID` / `ZAPI_TOKEN`.
+4. Em **Segurança da conta** (nível de conta Z-API, não da instância), copie o **Client-Token** para `ZAPI_CLIENT_TOKEN`.
+5. Configure o **webhook de mensagem recebida** da instância apontando para:
+   `https://<seu-dominio>/api/webhooks/zapi?secret=<valor de ZAPI_WEBHOOK_SECRET>`
+   (gere um valor aleatório para `ZAPI_WEBHOOK_SECRET`, ex: `openssl rand -hex 32`, e use o mesmo em `.env`/Vercel e na URL do webhook).
 
-To learn more about Next.js, take a look at the following resources:
+⚠️ O formato exato do payload de "mensagem recebida" pode variar entre contas/versões da Z-API. Depois de configurar o webhook, mande uma mensagem de teste respondendo (com reply/citação) a um lembrete e confira o payload nos logs da Vercel (`console.log` já deixado em `src/app/api/webhooks/zapi/route.ts`) — se o campo do ID da mensagem citada tiver outro nome, ajuste a função `parseReply` nesse arquivo.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 3. Cron diário de disparo
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `CRON_SECRET`: gere outro valor aleatório (`openssl rand -hex 32`), diferente do `ZAPI_WEBHOOK_SECRET`.
+- O `vercel.json` já agenda `/api/cron/dispatch-reminders` todo dia às 09:00 (horário de Brasília). A Vercel injeta automaticamente o header `Authorization: Bearer $CRON_SECRET` nesse tipo de rota — basta ter a env var `CRON_SECRET` configurada no projeto Vercel.
 
-## Deploy on Vercel
+## Papéis e acesso
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Funcionário** (`/dashboard`): cadastra e vê só os próprios clientes/leads, e consulta as mensagens-modelo do funil (somente leitura). Não vê se um lembrete foi respondido.
+- **Admin** (`/admin`): vê todos os funcionários e seus contatos, status de disparo/resposta de cada lembrete, cria contas de funcionário, edita as mensagens-modelo (2ª a 6ª tentativa) e exporta a lista de clientes/leads de qualquer funcionário em CSV/TXT.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Controle de acesso é reforçado em duas camadas: Row Level Security no Postgres (o banco em si já bloqueia consultas fora do escopo do usuário) e checagem de papel na camada de dados da aplicação (`src/lib/data/auth.ts`).
