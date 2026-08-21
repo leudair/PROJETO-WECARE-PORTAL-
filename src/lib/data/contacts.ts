@@ -51,6 +51,50 @@ export async function listOwnContacts() {
   return data;
 }
 
+// agrupa "Meus lembretes" por data — evita uma lista unica gigante quando o
+// funcionario tem muitos contatos cadastrados. O funcionario clica no dia
+// e ve so os lembretes daquela data.
+export async function listOwnContactDateSummaries() {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("next_contact_date, contact_type")
+    .eq("owner_id", profile.id)
+    .order("next_contact_date", { ascending: true });
+
+  if (error) throw error;
+
+  const statsByDate = new Map<string, { total: number; leads: number; clientes: number }>();
+  for (const contact of data) {
+    const current = statsByDate.get(contact.next_contact_date) ?? { total: 0, leads: 0, clientes: 0 };
+    current.total += 1;
+    if (contact.contact_type === "lead") current.leads += 1;
+    else current.clientes += 1;
+    statsByDate.set(contact.next_contact_date, current);
+  }
+
+  return Array.from(statsByDate.entries())
+    .map(([date, stats]) => ({ date, ...stats }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export async function listOwnContactsByDate(date: string) {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("*")
+    .eq("owner_id", profile.id)
+    .eq("next_contact_date", date)
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
 export async function createContact(input: ContactInput) {
   const profile = await requireProfile();
   const supabase = await createClient();

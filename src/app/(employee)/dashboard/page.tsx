@@ -1,7 +1,6 @@
-import { DEFAULT_LEAD_INTEREST_VALUE, listOwnContacts } from "@/lib/data/contacts";
+import Link from "next/link";
+import { listOwnContactDateSummaries } from "@/lib/data/contacts";
 import { ContactForm } from "./contact-form";
-import { ConvertLeadButton } from "./convert-button";
-import { PurchaseValue } from "./purchase-value";
 import { Podium } from "./podium";
 
 function formatDate(iso: string) {
@@ -9,7 +8,7 @@ function formatDate(iso: string) {
 }
 
 export default async function DashboardPage() {
-  const contacts = await listOwnContacts();
+  const dateSummaries = await listOwnContactDateSummaries();
 
   return (
     <div className="space-y-8">
@@ -18,61 +17,29 @@ export default async function DashboardPage() {
       <div>
         <h2 className="mb-3 text-sm font-semibold text-foreground">Meus lembretes</h2>
 
-        {contacts.length === 0 && (
+        {dateSummaries.length === 0 && (
           <div className="rounded-xl border border-border bg-surface p-6 text-center text-sm text-muted">
             Nenhum lembrete cadastrado ainda.
           </div>
         )}
 
-        <div className="space-y-3">
-          {contacts.map((contact) => (
-            <div key={contact.id} className="rounded-xl border border-border bg-surface p-4">
-              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-1">
-                <h3 className="font-semibold text-foreground">
-                  {contact.name}
-                  {contact.instagram_handle && (
-                    <span className="ml-1 font-normal text-muted">@{contact.instagram_handle}</span>
-                  )}
-                </h3>
-                <span className="text-xs text-muted">
-                  {contact.contact_type === "cliente" ? "Cliente" : `Lead · ${contact.attempt_stage}ª tentativa`}
-                </span>
+        <div className="space-y-2">
+          {dateSummaries.map(({ date, total, leads, clientes }) => (
+            <Link
+              key={date}
+              href={`/dashboard/dia/${date}`}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-surface p-4 hover:bg-surface-2"
+            >
+              <div>
+                <p className="font-semibold text-foreground">Lembretes de {formatDate(date)}</p>
+                <p className="text-xs text-muted">
+                  {clientes} cliente{clientes === 1 ? "" : "s"} · {leads} lead{leads === 1 ? "" : "s"}
+                </p>
               </div>
-
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <div className="rounded-lg border border-border bg-background p-2">
-                  <p className="text-[10px] uppercase text-muted">Telefone</p>
-                  <p className="font-medium text-foreground">{contact.phone}</p>
-                </div>
-                <div className="rounded-lg border border-border bg-background p-2">
-                  <p className="text-[10px] uppercase text-muted">Contato em</p>
-                  <p className="font-medium text-foreground">{formatDate(contact.next_contact_date)}</p>
-                </div>
-                <div className="rounded-lg border border-border bg-background p-2">
-                  <p className="text-[10px] uppercase text-muted">Última compra</p>
-                  {contact.contact_type === "cliente" || contact.converted ? (
-                    <PurchaseValue contactId={contact.id} value={contact.last_purchase_value} />
-                  ) : (
-                    <span className="text-muted">—</span>
-                  )}
-                </div>
-              </div>
-
-              {contact.contact_type === "lead" && (
-                <div className="mt-3">
-                  {contact.converted ? (
-                    <span className="inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">
-                      Convertido ✓
-                    </span>
-                  ) : (
-                    <ConvertLeadButton
-                      contactId={contact.id}
-                      suggestedValue={contact.lead_interest_value ?? DEFAULT_LEAD_INTEREST_VALUE}
-                    />
-                  )}
-                </div>
-              )}
-            </div>
+              <span className="rounded-md border border-border px-3 py-1 text-xs text-primary">
+                {total} lembrete{total === 1 ? "" : "s"} →
+              </span>
+            </Link>
           ))}
         </div>
       </div>
