@@ -11,17 +11,20 @@ function formatDate(iso: string) {
 
 function StatBox({
   label,
-  value,
-  emphasize,
+  amount,
+  variant,
 }: {
   label: string;
-  value: string;
-  emphasize?: boolean;
+  amount: number;
+  variant: "gain" | "cost" | "auto";
 }) {
+  const isPositive = variant === "gain" || (variant === "auto" && amount >= 0);
+  const colorClass = isPositive ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400";
+
   return (
     <div className="rounded-lg border border-border bg-background p-2">
       <p className="text-[10px] uppercase text-muted">{label}</p>
-      <p className={emphasize ? "font-semibold text-foreground" : "text-foreground"}>{value}</p>
+      <p className={`font-semibold ${colorClass}`}>{formatCurrency(amount)}</p>
     </div>
   );
 }
@@ -56,14 +59,14 @@ export default async function FinanceiroPage() {
                 <span className="text-xs text-muted">Semana de {formatDate(entry.week_start_date)}</span>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                <StatBox label="Faturamento" value={formatCurrency(breakdown.faturamento)} />
-                <StatBox label="Custo operacional" value={formatCurrency(breakdown.custoOperacional)} />
-                <StatBox label="Imposto (15%)" value={formatCurrency(breakdown.imposto)} />
-                <StatBox label="Comissão (2,5%)" value={formatCurrency(breakdown.comissao)} />
-                <StatBox label="Variável (4,5%)" value={formatCurrency(breakdown.variavel)} />
-                <StatBox label="Saldo da operação" value={formatCurrency(breakdown.saldoOperacao)} emphasize />
-                <StatBox label="Custo anúncios" value={formatCurrency(breakdown.custoAnuncios)} />
-                <StatBox label="Lucro líquido" value={formatCurrency(breakdown.lucroLiquido)} emphasize />
+                <StatBox label="Faturamento" amount={breakdown.faturamento} variant="gain" />
+                <StatBox label="Custo operacional" amount={breakdown.custoOperacional} variant="cost" />
+                <StatBox label="Imposto (15%)" amount={breakdown.imposto} variant="cost" />
+                <StatBox label="Comissão (2,5%)" amount={breakdown.comissao} variant="cost" />
+                <StatBox label="Variável (4,5%)" amount={breakdown.variavel} variant="cost" />
+                <StatBox label="Saldo da operação" amount={breakdown.saldoOperacao} variant="auto" />
+                <StatBox label="Custo anúncios" amount={breakdown.custoAnuncios} variant="cost" />
+                <StatBox label="Lucro líquido" amount={breakdown.lucroLiquido} variant="auto" />
               </div>
             </div>
           ))}
