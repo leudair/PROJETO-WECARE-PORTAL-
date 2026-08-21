@@ -71,7 +71,10 @@ export async function createContact(input: ContactInput) {
   if (error) throw error;
 }
 
-export async function markConverted(contactId: string, saleValue: number) {
+// saleDate e' a data em que a venda de fato aconteceu (o funcionario escolhe
+// — pode ser hoje ou um dia anterior), nao a data em que o registro foi
+// marcado no sistema. Isso e' o que decide em qual semana essa venda cai.
+export async function markConverted(contactId: string, saleValue: number, saleDate: string) {
   await requireProfile();
   const supabase = await createClient();
 
@@ -79,7 +82,7 @@ export async function markConverted(contactId: string, saleValue: number) {
     .from("contacts")
     .update({
       converted: true,
-      converted_at: new Date().toISOString(),
+      converted_at: new Date(`${saleDate}T12:00:00`).toISOString(),
       status: "done",
       last_purchase_value: saleValue,
     })

@@ -23,7 +23,10 @@ export async function Podium() {
   return (
     <div>
       <h2 className="mb-1 text-sm font-semibold text-foreground">Pódio da semana</h2>
-      <p className="mb-3 text-xs text-muted">Faturamento da semana de {formatWeek(leaderboard[0].week_start_date)}</p>
+      <p className="mb-3 text-xs text-muted">
+        Faturamento oficial lançado pelo Financeiro · semana de {formatWeek(leaderboard[0].week_start_date)}. Vendas
+        marcadas como convertidas entram aqui quando o Financeiro lançar o faturamento da semana.
+      </p>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {top3.map((row, i) => (

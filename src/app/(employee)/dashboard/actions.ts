@@ -13,6 +13,11 @@ export async function dismissNoticeAction(noticeId: string) {
 
 const SaleValueSchema = z.coerce.number().min(0, "Valor não pode ser negativo.");
 
+const MarkConvertedSchema = z.object({
+  saleValue: SaleValueSchema,
+  saleDate: z.string().date(),
+});
+
 export type MarkConvertedState = { error?: string } | undefined;
 
 export async function markConvertedAction(
@@ -20,14 +25,17 @@ export async function markConvertedAction(
   _state: MarkConvertedState,
   formData: FormData
 ): Promise<MarkConvertedState> {
-  const parsed = SaleValueSchema.safeParse(formData.get("saleValue"));
+  const parsed = MarkConvertedSchema.safeParse({
+    saleValue: formData.get("saleValue"),
+    saleDate: formData.get("saleDate"),
+  });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Valor inválido." };
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
 
   try {
-    await markConverted(contactId, parsed.data);
+    await markConverted(contactId, parsed.data.saleValue, parsed.data.saleDate);
   } catch {
     return { error: "Não foi possível salvar. Tente novamente." };
   }

@@ -14,7 +14,7 @@ export function PurchaseValue({ contactId, value }: { contactId: string; value: 
 
   if (open) {
     return (
-      <form action={formAction} className="flex items-center gap-1">
+      <form action={formAction} className="space-y-1">
         <input
           type="number"
           name="value"
@@ -22,19 +22,21 @@ export function PurchaseValue({ contactId, value }: { contactId: string; value: 
           min="0"
           defaultValue={value ?? 0}
           required
-          className="w-20 rounded-md border border-border px-1.5 py-1 text-xs"
+          className="w-full rounded-md border border-border px-1.5 py-1 text-xs"
         />
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground disabled:opacity-50"
-        >
-          {pending ? "..." : "Salvar"}
-        </button>
-        <button type="button" onClick={() => setOpen(false)} className="text-xs text-muted hover:text-foreground">
-          Cancelar
-        </button>
-        {state?.error && <p className="w-full text-xs text-red-600">{state.error}</p>}
+        <div className="flex items-center gap-2">
+          <button
+            type="submit"
+            disabled={pending}
+            className="rounded-md bg-primary px-2 py-0.5 text-xs text-primary-foreground disabled:opacity-50"
+          >
+            {pending ? "..." : "Salvar"}
+          </button>
+          <button type="button" onClick={() => setOpen(false)} className="text-xs text-muted hover:text-foreground">
+            Cancelar
+          </button>
+        </div>
+        {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
       </form>
     );
   }
