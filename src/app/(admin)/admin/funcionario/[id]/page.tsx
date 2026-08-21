@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { listEmployeeContactsPaginated, UNANSWERED_STREAK_ALERT } from "@/lib/data/admin";
+import { NoticeForm } from "../../employees/notice-form";
 
 function formatDate(iso: string) {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("pt-BR");
@@ -48,7 +49,10 @@ export default async function EmployeeContactsPage({
         <Link href="/admin" className="text-xs text-primary hover:underline">
           ← Voltar pra Visão geral
         </Link>
-        <h1 className="mt-1 text-lg font-semibold text-foreground">{employee.full_name}</h1>
+        <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-lg font-semibold text-foreground">{employee.full_name}</h1>
+          <NoticeForm employeeId={employee.id} />
+        </div>
         <p className="text-sm text-muted">
           {totalCount} lembrete{totalCount === 1 ? "" : "s"} cadastrado{totalCount === 1 ? "" : "s"}. Cards em
           vermelho: {UNANSWERED_STREAK_ALERT}+ reenvios seguidos sem resposta.

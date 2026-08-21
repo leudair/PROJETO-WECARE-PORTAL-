@@ -51,55 +51,64 @@ export default async function AdminOverviewPage({
             ))}
           </div>
         </div>
-        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
-          <table className="w-full text-sm">
-            <thead className="bg-background text-left text-xs uppercase text-muted">
-              <tr>
-                <th className="px-4 py-2">Funcionário</th>
-                <th className="px-4 py-2">Enviados</th>
-                <th className="px-4 py-2">Respondidos</th>
-                <th className="px-4 py-2">Aguardando resposta</th>
-                <th className="px-4 py-2">Falhas</th>
-                <th className="px-4 py-2">Taxa de resposta</th>
-              </tr>
-            </thead>
-            <tbody>
-              {responseSummary.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-muted">
-                    Nenhum funcionário cadastrado ainda.
-                  </td>
-                </tr>
-              )}
-              {responseSummary.map(({ employee, sent, replied, pending, failed, responseRate }) => (
-                <tr key={employee.id} className="border-t border-border">
-                  <td className="px-4 py-2">{employee.full_name}</td>
-                  <td className="px-4 py-2 text-muted">{sent}</td>
-                  <td className="px-4 py-2 text-muted">{replied}</td>
-                  <td className="px-4 py-2 text-muted">{pending}</td>
-                  <td className="px-4 py-2 text-muted">{failed}</td>
-                  <td className="px-4 py-2">
-                    {responseRate === null ? (
-                      <span className="text-muted">—</span>
-                    ) : (
-                      <span
-                        className={
-                          responseRate >= 0.7
-                            ? "rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700"
-                            : responseRate >= 0.4
-                              ? "rounded-full bg-yellow-100 px-2 py-0.5 text-xs text-yellow-700"
-                              : "rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-700"
-                        }
-                      >
-                        {Math.round(responseRate * 100)}%
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {responseSummary.length === 0 ? (
+          <div className="rounded-xl border border-border bg-surface p-6 text-center text-sm text-muted">
+            Nenhum funcionário cadastrado ainda.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {responseSummary.map(({ employee, sent, replied, pending, failed, responseRate }) => {
+              const pct = responseRate === null ? 0 : Math.round(responseRate * 100);
+              const barColor =
+                responseRate === null
+                  ? "bg-surface-2"
+                  : responseRate >= 0.7
+                    ? "bg-green-500"
+                    : responseRate >= 0.4
+                      ? "bg-yellow-500"
+                      : "bg-red-500";
+              const textColor =
+                responseRate === null
+                  ? "text-muted"
+                  : responseRate >= 0.7
+                    ? "text-green-600 dark:text-green-400"
+                    : responseRate >= 0.4
+                      ? "text-yellow-600 dark:text-yellow-400"
+                      : "text-red-600 dark:text-red-400";
+              return (
+                <div key={employee.id} className="rounded-xl border border-border bg-surface p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-semibold text-foreground">{employee.full_name}</h3>
+                    <span className={`text-xl font-bold ${textColor}`}>
+                      {responseRate === null ? "—" : `${pct}%`}
+                    </span>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                    <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+                    <div>
+                      <p className="text-[10px] uppercase text-muted">Enviados</p>
+                      <p className="font-semibold text-foreground">{sent}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase text-muted">Resp.</p>
+                      <p className="font-semibold text-foreground">{replied}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase text-muted">Aguard.</p>
+                      <p className="font-semibold text-foreground">{pending}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase text-muted">Falhas</p>
+                      <p className="font-semibold text-foreground">{failed}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div>
@@ -110,35 +119,38 @@ export default async function AdminOverviewPage({
             está convertendo pior e vale acompanhar de perto.
           </p>
         </div>
-        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
-          <table className="w-full text-sm">
-            <thead className="bg-background text-left text-xs uppercase text-muted">
-              <tr>
-                <th className="px-4 py-2">Funcionário</th>
-                <th className="px-4 py-2">Leads em aberto</th>
-                <th className="px-4 py-2">Valor na mesa</th>
-              </tr>
-            </thead>
-            <tbody>
-              {moneyOnTable.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="px-4 py-6 text-center text-muted">
-                    Nenhum lead em aberto no momento.
-                  </td>
-                </tr>
-              )}
-              {moneyOnTable.map(({ employee, total, count }) => (
-                <tr key={employee.id} className="border-t border-border">
-                  <td className="px-4 py-2">{employee.full_name}</td>
-                  <td className="px-4 py-2 text-muted">{count}</td>
-                  <td className="px-4 py-2 font-semibold text-red-700 dark:text-red-400">
-                    {formatCurrency(total)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {moneyOnTable.length === 0 ? (
+          <div className="rounded-xl border border-border bg-surface p-6 text-center text-sm text-muted">
+            Nenhum lead em aberto no momento.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {(() => {
+              const maxTotal = Math.max(...moneyOnTable.map((r) => r.total), 1);
+              return moneyOnTable.map(({ employee, total, count }, i) => (
+                <div
+                  key={employee.id}
+                  className="relative overflow-hidden rounded-xl border border-red-200 bg-surface dark:border-red-900/50"
+                >
+                  <div
+                    className="absolute inset-y-0 left-0 bg-red-100 dark:bg-red-950/40"
+                    style={{ width: `${(total / maxTotal) * 100}%` }}
+                  />
+                  <div className="relative flex items-center justify-between gap-2 px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-bold text-muted">{i + 1}º</span>
+                      <span className="font-medium text-foreground">{employee.full_name}</span>
+                      <span className="text-xs text-muted">
+                        {count} lead{count === 1 ? "" : "s"} em aberto
+                      </span>
+                    </div>
+                    <span className="font-bold text-red-700 dark:text-red-400">{formatCurrency(total)}</span>
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
+        )}
       </div>
 
       <div>
