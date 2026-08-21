@@ -120,6 +120,102 @@ export async function listOverview(period: SummaryPeriod = "today") {
   return { rows, profiles, responseSummary, moneyOnTable, period };
 }
 
+// resumo por funcionario pra Visao Geral — so contagens, sem carregar todo
+// mundo de uma vez. Clicar no funcionario abre a lista paginada dele.
+export async function listEmployeeContactSummaries() {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const [{ data: contacts, error: contactsError }, { data: profiles, error: profilesError }] = await Promise.all([
+    supabase.from("contacts").select("id, owner_id, contact_type, converted"),
+    supabase.from("profiles").select("*").eq("role", "employee").order("full_name", { ascending: true }),
+  ]);
+
+  if (contactsError) throw contactsError;
+  if (profilesError) throw profilesError;
+
+  const statsByOwner = new Map<string, { total: number; leads: number; clientes: number }>();
+  for (const contact of contacts) {
+    const current = statsByOwner.get(contact.owner_id) ?? { total: 0, leads: 0, clientes: 0 };
+    current.total += 1;
+    if (contact.contact_type === "lead") current.leads += 1;
+    else current.clientes += 1;
+    statsByOwner.set(contact.owner_id, current);
+  }
+
+  return profiles.map((employee) => {
+    const stats = statsByOwner.get(employee.id) ?? { total: 0, leads: 0, clientes: 0 };
+    return { employee, ...stats };
+  });
+}
+
+const CONTACTS_PAGE_SIZE = 20;
+
+// lista paginada dos contatos de UM funcionario (20 por pagina) — usada na
+// pagina de detalhe aberta ao clicar num funcionario na Visao Geral.
+export async function listEmployeeContactsPaginated(employeeId: string, page: number) {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const safePage = Math.max(1, page);
+  const from = (safePage - 1) * CONTACTS_PAGE_SIZE;
+  const to = from + CONTACTS_PAGE_SIZE - 1;
+
+  const [
+    { data: employee, error: employeeError },
+    { data: contacts, error: contactsError, count },
+    { data: dispatches, error: dispatchesError },
+  ] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", employeeId).maybeSingle(),
+    supabase
+      .from("contacts")
+      .select("*", { count: "exact" })
+      .eq("owner_id", employeeId)
+      .order("next_contact_date", { ascending: true })
+      .range(from, to),
+    supabase
+      .from("reminder_dispatches")
+      .select("*")
+      .eq("employee_id", employeeId)
+      .order("created_at", { ascending: false }),
+  ]);
+
+  if (employeeError) throw employeeError;
+  if (contactsError) throw contactsError;
+  if (dispatchesError) throw dispatchesError;
+  if (!employee) throw new Error("Funcionário não encontrado.");
+
+  const latestDispatchByContact = new Map<string, (typeof dispatches)[number]>();
+  for (const dispatch of dispatches) {
+    if (!latestDispatchByContact.has(dispatch.contact_id)) {
+      latestDispatchByContact.set(dispatch.contact_id, dispatch);
+    }
+  }
+
+  const unansweredStreakByContact = new Map<string, number>();
+  for (const dispatch of dispatches) {
+    if (dispatch.status !== "sent") continue;
+    unansweredStreakByContact.set(dispatch.contact_id, (unansweredStreakByContact.get(dispatch.contact_id) ?? 0) + 1);
+  }
+
+  const rows = contacts.map((contact) => ({
+    contact,
+    latestDispatch: latestDispatchByContact.get(contact.id) ?? null,
+    unansweredStreak: unansweredStreakByContact.get(contact.id) ?? 0,
+  }));
+
+  const totalCount = count ?? 0;
+
+  return {
+    employee,
+    rows,
+    page: safePage,
+    pageSize: CONTACTS_PAGE_SIZE,
+    totalCount,
+    totalPages: Math.max(1, Math.ceil(totalCount / CONTACTS_PAGE_SIZE)),
+  };
+}
+
 export async function listEmployees() {
   await requireAdmin();
   const supabase = await createClient();
