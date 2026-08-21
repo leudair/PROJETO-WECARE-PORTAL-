@@ -178,6 +178,45 @@ export async function createEmployee(input: z.infer<typeof CreateEmployeeSchema>
   }
 }
 
+export async function getEmployeeDeletionImpact(employeeId: string) {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const [contactsResult, financialResult] = await Promise.all([
+    supabase.from("contacts").select("id", { count: "exact", head: true }).eq("owner_id", employeeId),
+    supabase.from("financial_entries").select("id", { count: "exact", head: true }).eq("employee_id", employeeId),
+  ]);
+
+  if (contactsResult.error) throw contactsResult.error;
+  if (financialResult.error) throw financialResult.error;
+
+  return {
+    contactsCount: contactsResult.count ?? 0,
+    financialEntriesCount: financialResult.count ?? 0,
+  };
+}
+
+export const UpdateEmployeeSchema = z.object({
+  employeeId: z.uuid(),
+  fullName: z.string().trim().min(2, "Informe o nome."),
+  whatsappNumber: z
+    .string()
+    .trim()
+    .regex(/^\+[1-9]\d{7,14}$/, "Use o formato internacional, ex: +5511999999999"),
+});
+
+export async function updateEmployee(input: z.infer<typeof UpdateEmployeeSchema>) {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ full_name: input.fullName, whatsapp_number: input.whatsappNumber })
+    .eq("id", input.employeeId);
+
+  if (error) throw error;
+}
+
 export async function deleteEmployee(employeeId: string) {
   const currentProfile = await requireAdmin();
   const admin = createAdminClient();

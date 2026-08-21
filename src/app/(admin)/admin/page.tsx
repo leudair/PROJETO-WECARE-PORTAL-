@@ -144,7 +144,9 @@ export default async function AdminOverviewPage({
                 <tr key={employee.id} className="border-t border-border">
                   <td className="px-4 py-2">{employee.full_name}</td>
                   <td className="px-4 py-2 text-muted">{count}</td>
-                  <td className="px-4 py-2 font-semibold text-foreground">{formatCurrency(total)}</td>
+                  <td className="px-4 py-2 font-semibold text-red-700 dark:text-red-400">
+                    {formatCurrency(total)}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -199,8 +201,14 @@ export default async function AdminOverviewPage({
                 <td className="px-4 py-2">
                   {contact.contact_type === "cliente" ? "Cliente" : `Lead · ${contact.attempt_stage}ª`}
                 </td>
-                <td className="px-4 py-2 text-muted">
-                  {contact.last_purchase_value != null ? formatCurrency(contact.last_purchase_value) : "—"}
+                <td className="px-4 py-2">
+                  {contact.last_purchase_value != null ? (
+                    <span className="font-semibold text-green-700 dark:text-green-400">
+                      {formatCurrency(contact.last_purchase_value)}
+                    </span>
+                  ) : (
+                    <span className="text-muted">—</span>
+                  )}
                 </td>
                 <td className="px-4 py-2 text-muted">{formatDate(contact.next_contact_date)}</td>
                 <td className="px-4 py-2 text-muted">{formatDateTime(latestDispatch?.sent_at ?? null)}</td>

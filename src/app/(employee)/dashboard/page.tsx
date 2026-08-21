@@ -52,8 +52,14 @@ export default async function DashboardPage() {
                     {contact.contact_type === "cliente" ? "Cliente" : `Lead · ${contact.attempt_stage}ª tentativa`}
                   </td>
                   <td className="px-4 py-2 text-muted">{contact.phone}</td>
-                  <td className="px-4 py-2 text-muted">
-                    {contact.last_purchase_value != null ? formatCurrency(contact.last_purchase_value) : "—"}
+                  <td className="px-4 py-2">
+                    {contact.last_purchase_value != null ? (
+                      <span className="font-semibold text-green-700 dark:text-green-400">
+                        {formatCurrency(contact.last_purchase_value)}
+                      </span>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-2 text-muted">{formatDate(contact.next_contact_date)}</td>
                   <td className="px-4 py-2">

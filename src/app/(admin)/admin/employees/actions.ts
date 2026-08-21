@@ -1,7 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { CreateEmployeeSchema, createEmployee, deleteEmployee } from "@/lib/data/admin";
+import {
+  CreateEmployeeSchema,
+  UpdateEmployeeSchema,
+  createEmployee,
+  deleteEmployee,
+  getEmployeeDeletionImpact,
+  updateEmployee,
+} from "@/lib/data/admin";
 import { CreateNoticeSchema, createNotice } from "@/lib/data/notices";
 
 export type CreateEmployeeState = { error?: string; success?: string } | undefined;
@@ -66,4 +73,36 @@ export async function deleteEmployeeAction(employeeId: string): Promise<DeleteEm
 
   revalidatePath("/admin/employees");
   revalidatePath("/admin");
+}
+
+// chamada direto do client (nao e' um form action) pra mostrar o impacto
+// ANTES do admin confirmar a exclusao.
+export async function getDeletionImpactAction(employeeId: string) {
+  return getEmployeeDeletionImpact(employeeId);
+}
+
+export type UpdateEmployeeState = { error?: string; success?: string } | undefined;
+
+export async function updateEmployeeAction(
+  _state: UpdateEmployeeState,
+  formData: FormData
+): Promise<UpdateEmployeeState> {
+  const parsed = UpdateEmployeeSchema.safeParse({
+    employeeId: formData.get("employeeId"),
+    fullName: formData.get("fullName"),
+    whatsappNumber: formData.get("whatsappNumber"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+  }
+
+  try {
+    await updateEmployee(parsed.data);
+  } catch {
+    return { error: "Não foi possível salvar." };
+  }
+
+  revalidatePath("/admin/employees");
+  return { success: "Atualizado." };
 }

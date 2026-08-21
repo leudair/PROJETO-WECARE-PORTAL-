@@ -3,6 +3,7 @@ import { getCurrentProfile } from "@/lib/data/auth";
 import { EmployeeForm } from "./employee-form";
 import { NoticeForm } from "./notice-form";
 import { DeleteEmployeeButton } from "./delete-button";
+import { EditEmployeeButton } from "./edit-button";
 
 const ROLE_LABEL: Record<string, string> = {
   employee: "Funcionário",
@@ -41,7 +42,16 @@ export default async function EmployeesPage() {
               )}
               {employees.map((employee) => (
                 <tr key={employee.id} className="border-t border-border">
-                  <td className="px-4 py-2">{employee.full_name}</td>
+                  <td className="px-4 py-2">
+                    <div className="flex items-center gap-2">
+                      {employee.full_name}
+                      <EditEmployeeButton
+                        employeeId={employee.id}
+                        fullName={employee.full_name}
+                        whatsappNumber={employee.whatsapp_number}
+                      />
+                    </div>
+                  </td>
                   <td className="px-4 py-2 text-muted">{ROLE_LABEL[employee.role] ?? employee.role}</td>
                   <td className="px-4 py-2 text-muted">{employee.whatsapp_number}</td>
                   <td className="px-4 py-2">
