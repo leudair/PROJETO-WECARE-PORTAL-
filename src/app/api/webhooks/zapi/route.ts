@@ -78,7 +78,15 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Bad request", { status: 400 });
   }
 
-  console.log("Z-API webhook payload:", JSON.stringify(body));
+  // Nunca logar o payload completo: `text.message` e' texto livre digitado
+  // pelo funcionario e `phone` e' um dado pessoal — nao devem parar em log
+  // de producao. So o necessario pra depurar problema de roteamento/match.
+  console.log("Z-API webhook recebido:", {
+    type: body.type ?? body.event ?? null,
+    isGroup: body.isGroup === true,
+    fromMe: body.fromMe === true,
+    hasText: Boolean((body.text as Record<string, unknown> | undefined)?.message),
+  });
 
   const incoming = parseIncoming(body);
   if (!incoming?.text) {

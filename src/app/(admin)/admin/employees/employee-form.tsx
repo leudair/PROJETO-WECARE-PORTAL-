@@ -3,8 +3,16 @@
 import { useActionState, useState } from "react";
 import { createEmployeeAction } from "./actions";
 
+// crypto.getRandomValues (Web Crypto, CSPRNG) em vez de Math.random() —
+// que nao e' criptograficamente seguro (CWE-338) — pra gerar a senha
+// temporaria. "A1!" garante maiuscula+numero+simbolo mesmo com o alfabeto
+// alfanumerico minusculo abaixo.
 function randomPassword() {
-  return Math.random().toString(36).slice(-10) + "A1!";
+  const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+  const bytes = new Uint32Array(10);
+  crypto.getRandomValues(bytes);
+  const body = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+  return body + "A1!";
 }
 
 export function EmployeeForm({ canCreateManager }: { canCreateManager: boolean }) {

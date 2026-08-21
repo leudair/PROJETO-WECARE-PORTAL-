@@ -236,6 +236,16 @@ export async function listEmployees() {
   return data.map((profile) => ({ ...profile, email: emailById.get(profile.id) ?? "" }));
 }
 
+// Comprimento minimo sozinho deixa passar senha fraca tipo "12345678". Exige
+// pelo menos 1 maiuscula + 1 minuscula + 1 numero — o gerador automatico do
+// formulario (Math.random -> crypto.getRandomValues) ja produz isso.
+const PasswordSchema = z
+  .string()
+  .min(8, "A senha precisa ter ao menos 8 caracteres.")
+  .regex(/[a-z]/, "A senha precisa ter ao menos uma letra minúscula.")
+  .regex(/[A-Z]/, "A senha precisa ter ao menos uma letra maiúscula.")
+  .regex(/[0-9]/, "A senha precisa ter ao menos um número.");
+
 export const CreateEmployeeSchema = z.object({
   fullName: z.string().trim().min(2, "Informe o nome."),
   email: z.email("Email invalido."),
@@ -243,7 +253,7 @@ export const CreateEmployeeSchema = z.object({
     .string()
     .trim()
     .regex(/^\+[1-9]\d{7,14}$/, "Use o formato internacional, ex: +5511999999999"),
-  password: z.string().min(8, "A senha temporaria precisa ter ao menos 8 caracteres."),
+  password: PasswordSchema,
   role: z.enum(["employee", "manager", "financeiro"]),
 });
 
@@ -308,11 +318,7 @@ export const UpdateEmployeeSchema = z.object({
     .trim()
     .regex(/^\+[1-9]\d{7,14}$/, "Use o formato internacional, ex: +5511999999999"),
   role: z.enum(["employee", "manager", "financeiro"]),
-  password: z
-    .string()
-    .min(8, "A senha precisa ter ao menos 8 caracteres.")
-    .optional()
-    .or(z.literal("").transform(() => undefined)),
+  password: PasswordSchema.optional().or(z.literal("").transform(() => undefined)),
 });
 
 export async function updateEmployee(input: z.infer<typeof UpdateEmployeeSchema>) {

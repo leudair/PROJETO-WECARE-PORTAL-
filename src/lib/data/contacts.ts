@@ -119,9 +119,12 @@ export async function createContact(input: ContactInput) {
 // — pode ser hoje ou um dia anterior), nao a data em que o registro foi
 // marcado no sistema. Isso e' o que decide em qual semana essa venda cai.
 export async function markConverted(contactId: string, saleValue: number, saleDate: string) {
-  await requireProfile();
+  const profile = await requireProfile();
   const supabase = await createClient();
 
+  // owner_id no filtro e' defesa em profundidade — a RLS (contacts_owner_update)
+  // ja bloqueia update de contato de outro dono, mas filtrar aqui tambem evita
+  // depender exclusivamente da policy do banco pra essa garantia.
   const { error } = await supabase
     .from("contacts")
     .update({
@@ -130,7 +133,8 @@ export async function markConverted(contactId: string, saleValue: number, saleDa
       status: "done",
       last_purchase_value: saleValue,
     })
-    .eq("id", contactId);
+    .eq("id", contactId)
+    .eq("owner_id", profile.id);
 
   if (error) throw error;
 }
@@ -138,13 +142,14 @@ export async function markConverted(contactId: string, saleValue: number, saleDa
 // Corrige o valor depois de salvo — cliente ou lead ja convertido. Cobre o
 // caso do lead salvo com o padrao de R$50 que depois fecha por outro valor.
 export async function updatePurchaseValue(contactId: string, value: number) {
-  await requireProfile();
+  const profile = await requireProfile();
   const supabase = await createClient();
 
   const { error } = await supabase
     .from("contacts")
     .update({ last_purchase_value: value })
-    .eq("id", contactId);
+    .eq("id", contactId)
+    .eq("owner_id", profile.id);
 
   if (error) throw error;
 }

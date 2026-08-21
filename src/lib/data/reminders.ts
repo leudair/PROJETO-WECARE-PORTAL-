@@ -1,4 +1,5 @@
 import "server-only";
+import { randomInt } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export { todayInSaoPaulo } from "@/lib/date";
@@ -14,10 +15,12 @@ export const SECONDS_PER_CONTACT_MIN = 8;
 
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // sem 0/O/1/I/L, pra nao confundir na hora de digitar
 
+// randomInt (node:crypto) em vez de Math.random(): CSPRNG, nao apenas um
+// gerador estatistico (CWE-338). Mesmo formato/alfabeto de antes.
 export function generateConfirmationCode(): string {
   let code = "";
   for (let i = 0; i < 6; i++) {
-    code += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+    code += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
   }
   return code;
 }
