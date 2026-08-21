@@ -130,7 +130,14 @@ export async function listEmployees() {
     .order("role", { ascending: true })
     .order("full_name", { ascending: true });
   if (error) throw error;
-  return data;
+
+  // email mora no auth.users, nao em profiles — busca junto pra exibir/editar
+  const admin = createAdminClient();
+  const { data: authUsers, error: authError } = await admin.auth.admin.listUsers();
+  if (authError) throw authError;
+  const emailById = new Map(authUsers.users.map((u) => [u.id, u.email ?? ""]));
+
+  return data.map((profile) => ({ ...profile, email: emailById.get(profile.id) ?? "" }));
 }
 
 export const CreateEmployeeSchema = z.object({
@@ -199,22 +206,44 @@ export async function getEmployeeDeletionImpact(employeeId: string) {
 export const UpdateEmployeeSchema = z.object({
   employeeId: z.uuid(),
   fullName: z.string().trim().min(2, "Informe o nome."),
+  email: z.email("Email inválido."),
   whatsappNumber: z
     .string()
     .trim()
     .regex(/^\+[1-9]\d{7,14}$/, "Use o formato internacional, ex: +5511999999999"),
+  role: z.enum(["employee", "manager", "financeiro"]),
+  password: z
+    .string()
+    .min(8, "A senha precisa ter ao menos 8 caracteres.")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
 });
 
 export async function updateEmployee(input: z.infer<typeof UpdateEmployeeSchema>) {
-  await requireAdmin();
-  const supabase = await createClient();
+  const currentProfile = await requireAdmin();
 
-  const { error } = await supabase
+  // so o CEO promove alguem a gerente ou financeiro — mesma regra da criacao
+  if (input.role !== "employee" && currentProfile.role !== "admin") {
+    throw new Error("Somente o CEO pode definir papel de gerente ou financeiro.");
+  }
+
+  const admin = createAdminClient();
+
+  const authUpdate: { email: string; email_confirm: true; password?: string } = {
+    email: input.email,
+    email_confirm: true,
+  };
+  if (input.password) authUpdate.password = input.password;
+
+  const { error: authError } = await admin.auth.admin.updateUserById(input.employeeId, authUpdate);
+  if (authError) throw authError;
+
+  const { error: profileError } = await admin
     .from("profiles")
-    .update({ full_name: input.fullName, whatsapp_number: input.whatsappNumber })
+    .update({ full_name: input.fullName, whatsapp_number: input.whatsappNumber, role: input.role })
     .eq("id", input.employeeId);
 
-  if (error) throw error;
+  if (profileError) throw profileError;
 }
 
 export async function deleteEmployee(employeeId: string) {

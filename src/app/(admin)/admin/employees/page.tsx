@@ -48,7 +48,10 @@ export default async function EmployeesPage() {
                       <EditEmployeeButton
                         employeeId={employee.id}
                         fullName={employee.full_name}
+                        email={employee.email}
                         whatsappNumber={employee.whatsapp_number}
+                        role={employee.role}
+                        canSetElevatedRole={profile?.role === "admin"}
                       />
                     </div>
                   </td>

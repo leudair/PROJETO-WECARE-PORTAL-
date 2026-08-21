@@ -90,7 +90,10 @@ export async function updateEmployeeAction(
   const parsed = UpdateEmployeeSchema.safeParse({
     employeeId: formData.get("employeeId"),
     fullName: formData.get("fullName"),
+    email: formData.get("email"),
     whatsappNumber: formData.get("whatsappNumber"),
+    role: formData.get("role"),
+    password: formData.get("password") || undefined,
   });
 
   if (!parsed.success) {
@@ -99,8 +102,9 @@ export async function updateEmployeeAction(
 
   try {
     await updateEmployee(parsed.data);
-  } catch {
-    return { error: "Não foi possível salvar." };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Não foi possível salvar.";
+    return { error: message };
   }
 
   revalidatePath("/admin/employees");
