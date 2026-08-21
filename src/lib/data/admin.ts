@@ -178,6 +178,32 @@ export async function createEmployee(input: z.infer<typeof CreateEmployeeSchema>
   }
 }
 
+export async function deleteEmployee(employeeId: string) {
+  const currentProfile = await requireAdmin();
+  const admin = createAdminClient();
+
+  if (employeeId === currentProfile.id) {
+    throw new Error("Você não pode excluir a própria conta.");
+  }
+
+  const { data: target, error: targetError } = await admin
+    .from("profiles")
+    .select("id, role")
+    .eq("id", employeeId)
+    .maybeSingle();
+  if (targetError) throw targetError;
+  if (!target) throw new Error("Conta não encontrada.");
+
+  // so o CEO exclui contas de gerente ou financeiro — mesma regra da criacao
+  if (target.role !== "employee" && currentProfile.role !== "admin") {
+    throw new Error("Somente o CEO pode excluir contas de gerente ou financeiro.");
+  }
+
+  // apaga o usuario no Auth; profiles/contacts em cascata (FK on delete cascade)
+  const { error } = await admin.auth.admin.deleteUser(employeeId);
+  if (error) throw error;
+}
+
 export async function updateTemplate(stage: number, body: string) {
   await requireAdmin();
   const supabase = await createClient();

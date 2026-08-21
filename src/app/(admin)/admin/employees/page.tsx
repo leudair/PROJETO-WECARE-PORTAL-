@@ -2,6 +2,7 @@ import { listEmployees } from "@/lib/data/admin";
 import { getCurrentProfile } from "@/lib/data/auth";
 import { EmployeeForm } from "./employee-form";
 import { NoticeForm } from "./notice-form";
+import { DeleteEmployeeButton } from "./delete-button";
 
 const ROLE_LABEL: Record<string, string> = {
   employee: "Funcionário",
@@ -27,12 +28,13 @@ export default async function EmployeesPage() {
                 <th className="px-4 py-2">WhatsApp</th>
                 <th className="px-4 py-2">Exportar</th>
                 <th className="px-4 py-2">Aviso</th>
+                <th className="px-4 py-2"></th>
               </tr>
             </thead>
             <tbody>
               {employees.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-muted">
+                  <td colSpan={6} className="px-4 py-6 text-center text-muted">
                     Nenhum funcionário cadastrado ainda.
                   </td>
                 </tr>
@@ -64,6 +66,9 @@ export default async function EmployeesPage() {
                   </td>
                   <td className="px-4 py-2">
                     <NoticeForm employeeId={employee.id} />
+                  </td>
+                  <td className="px-4 py-2">
+                    <DeleteEmployeeButton employeeId={employee.id} employeeName={employee.full_name} />
                   </td>
                 </tr>
               ))}

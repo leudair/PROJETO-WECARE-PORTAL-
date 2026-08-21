@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { CreateEmployeeSchema, createEmployee } from "@/lib/data/admin";
+import { CreateEmployeeSchema, createEmployee, deleteEmployee } from "@/lib/data/admin";
 import { CreateNoticeSchema, createNotice } from "@/lib/data/notices";
 
 export type CreateEmployeeState = { error?: string; success?: string } | undefined;
@@ -52,4 +52,18 @@ export async function sendNoticeAction(_state: SendNoticeState, formData: FormDa
   }
 
   return { success: "Aviso enviado." };
+}
+
+export type DeleteEmployeeState = { error?: string } | undefined;
+
+export async function deleteEmployeeAction(employeeId: string): Promise<DeleteEmployeeState> {
+  try {
+    await deleteEmployee(employeeId);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Não foi possível excluir.";
+    return { error: message };
+  }
+
+  revalidatePath("/admin/employees");
+  revalidatePath("/admin");
 }
