@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function FinanceLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireFinance();
+  const canSeeAdmin = profile.role === "admin" || profile.role === "manager";
 
   return (
     <div className="min-h-screen bg-background">
@@ -16,6 +17,19 @@ export default async function FinanceLayout({ children }: { children: React.Reac
               <Image src="/wecare-logo.png" alt="WeCare" width={140} height={60} className="h-6 w-auto" priority />
               Financeiro
             </Link>
+            {canSeeAdmin && (
+              <>
+                <Link href="/admin" className="text-muted hover:text-foreground">
+                  Visão geral
+                </Link>
+                <Link href="/admin/employees" className="text-muted hover:text-foreground">
+                  Funcionários
+                </Link>
+                <Link href="/admin/templates" className="text-muted hover:text-foreground">
+                  Mensagens
+                </Link>
+              </>
+            )}
           </nav>
           <div className="flex items-center gap-3 text-sm text-muted">
             <span>{profile.full_name}</span>
