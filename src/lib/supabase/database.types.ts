@@ -211,7 +211,17 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      get_weekly_leaderboard: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          employee_id: string;
+          full_name: string;
+          faturamento: number;
+          week_start_date: string;
+        }[];
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

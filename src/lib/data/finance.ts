@@ -1,7 +1,7 @@
 import "server-only";
 import * as z from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { requireFinance } from "./auth";
+import { requireFinance, requireProfile } from "./auth";
 
 // Percentuais fixos do regime da empresa (Simples Nacional). Se a aliquota
 // mudar de faixa um dia, so mexer aqui — o resto do calculo se ajusta sozinho.
@@ -105,4 +105,15 @@ export async function upsertFinancialEntry(input: z.infer<typeof FinancialEntryS
   );
 
   if (error) throw error;
+}
+
+// Visivel para qualquer funcionario logado (nao so financeiro/admin) — a
+// funcao SECURITY DEFINER no banco expoe deliberadamente so nome+faturamento
+// da semana mais recente, nunca os custos.
+export async function getWeeklyLeaderboard() {
+  await requireProfile();
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_weekly_leaderboard");
+  if (error) throw error;
+  return data;
 }

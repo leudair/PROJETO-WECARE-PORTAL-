@@ -1,6 +1,7 @@
 import { listOwnContacts } from "@/lib/data/contacts";
 import { ContactForm } from "./contact-form";
 import { markConvertedAction } from "./actions";
+import { Podium } from "./podium";
 
 function formatDate(iso: string) {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("pt-BR");
@@ -79,6 +80,8 @@ export default async function DashboardPage() {
           </table>
         </div>
       </div>
+
+      <Podium />
     </div>
   );
 }
