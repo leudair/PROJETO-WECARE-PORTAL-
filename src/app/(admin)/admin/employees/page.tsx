@@ -6,6 +6,7 @@ import { NoticeForm } from "./notice-form";
 const ROLE_LABEL: Record<string, string> = {
   employee: "Funcionário",
   manager: "Gerente",
+  financeiro: "Financeiro",
 };
 
 export default async function EmployeesPage() {
@@ -16,7 +17,7 @@ export default async function EmployeesPage() {
       <EmployeeForm canCreateManager={profile?.role === "admin"} />
 
       <div>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Funcionários e gerentes</h2>
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Funcionários, gerentes e financeiro</h2>
         <div className="overflow-hidden rounded-xl border border-border bg-surface">
           <table className="w-full text-sm">
             <thead className="bg-background text-left text-xs uppercase text-muted">

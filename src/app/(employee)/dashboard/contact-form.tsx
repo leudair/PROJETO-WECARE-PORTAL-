@@ -94,23 +94,40 @@ export function ContactForm() {
       )}
 
       {contactType === "lead" && (
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-foreground">Qual tentativa é essa?</label>
-          <select
-            name="attemptStage"
-            required
-            defaultValue=""
-            className="w-full rounded-md border border-border px-3 py-2 text-sm"
-          >
-            <option value="" disabled>
-              Selecione
-            </option>
-            {STAGES.map((stage) => (
-              <option key={stage} value={stage}>
-                {stage}ª tentativa
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-foreground">Qual tentativa é essa?</label>
+            <select
+              name="attemptStage"
+              required
+              defaultValue=""
+              className="w-full rounded-md border border-border px-3 py-2 text-sm"
+            >
+              <option value="" disabled>
+                Selecione
               </option>
-            ))}
-          </select>
+              {STAGES.map((stage) => (
+                <option key={stage} value={stage}>
+                  {stage}ª tentativa
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-foreground">Valor de interesse (se manifestado)</label>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-muted">R$</span>
+              <input
+                type="number"
+                name="leadInterestValue"
+                min="0"
+                step="0.01"
+                placeholder="50,00 (padrão)"
+                className="w-32 rounded-md border border-border px-3 py-2 text-sm"
+              />
+            </div>
+            <p className="text-xs text-muted">Se o lead não citou valor, deixe em branco (assume R$ 50).</p>
+          </div>
         </div>
       )}
 

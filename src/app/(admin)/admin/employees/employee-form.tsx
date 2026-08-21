@@ -42,6 +42,7 @@ export function EmployeeForm({ canCreateManager }: { canCreateManager: boolean }
         >
           <option value="employee">Funcionário</option>
           {canCreateManager && <option value="manager">Gerente</option>}
+          {canCreateManager && <option value="financeiro">Financeiro</option>}
         </select>
       </div>
 

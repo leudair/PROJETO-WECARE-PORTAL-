@@ -1,11 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { ContactInputSchema, createContact } from "@/lib/data/contacts";
+import { ContactInputSchema, createContact, markConverted } from "@/lib/data/contacts";
 import { markNoticeRead } from "@/lib/data/notices";
 
 export async function dismissNoticeAction(noticeId: string) {
   await markNoticeRead(noticeId);
+  revalidatePath("/dashboard");
+  revalidatePath("/admin");
+}
+
+export async function markConvertedAction(contactId: string) {
+  await markConverted(contactId);
   revalidatePath("/dashboard");
   revalidatePath("/admin");
 }
@@ -21,6 +27,7 @@ export async function addContact(_state: AddContactState, formData: FormData): P
     attemptStage: formData.get("attemptStage") || undefined,
     nextContactDate: formData.get("nextContactDate"),
     lastPurchaseValue: formData.get("lastPurchaseValue") || undefined,
+    leadInterestValue: formData.get("leadInterestValue") || undefined,
   });
 
   if (!parsed.success) {

@@ -96,7 +96,27 @@ export async function listOverview(period: SummaryPeriod = "today") {
     })
     .sort((a, b) => b.sent - a.sent);
 
-  return { rows, profiles, responseSummary, period };
+  // "dinheiro na mesa": soma do valor de interesse dos leads ainda nao
+  // convertidos, por funcionario — sinaliza quem esta convertendo pior.
+  const moneyOnTableByEmployee = new Map<string, { total: number; count: number }>();
+  for (const contact of contacts) {
+    if (contact.contact_type !== "lead" || contact.converted) continue;
+    const current = moneyOnTableByEmployee.get(contact.owner_id) ?? { total: 0, count: 0 };
+    current.total += contact.lead_interest_value ?? 0;
+    current.count += 1;
+    moneyOnTableByEmployee.set(contact.owner_id, current);
+  }
+
+  const moneyOnTable = profiles
+    .filter((p) => p.role === "employee")
+    .map((employee) => {
+      const stats = moneyOnTableByEmployee.get(employee.id) ?? { total: 0, count: 0 };
+      return { employee, total: stats.total, count: stats.count };
+    })
+    .filter((row) => row.count > 0)
+    .sort((a, b) => b.total - a.total);
+
+  return { rows, profiles, responseSummary, moneyOnTable, period };
 }
 
 export async function listEmployees() {
@@ -105,7 +125,7 @@ export async function listEmployees() {
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
-    .in("role", ["employee", "manager"])
+    .in("role", ["employee", "manager", "financeiro"])
     .order("role", { ascending: true })
     .order("full_name", { ascending: true });
   if (error) throw error;
@@ -120,15 +140,15 @@ export const CreateEmployeeSchema = z.object({
     .trim()
     .regex(/^\+[1-9]\d{7,14}$/, "Use o formato internacional, ex: +5511999999999"),
   password: z.string().min(8, "A senha temporaria precisa ter ao menos 8 caracteres."),
-  role: z.enum(["employee", "manager"]),
+  role: z.enum(["employee", "manager", "financeiro"]),
 });
 
 export async function createEmployee(input: z.infer<typeof CreateEmployeeSchema>) {
   const currentProfile = await requireAdmin();
 
-  // so o CEO (admin de verdade) pode promover alguem a gerente
-  if (input.role === "manager" && currentProfile.role !== "admin") {
-    throw new Error("Somente o CEO pode criar contas de gerente.");
+  // so o CEO (admin de verdade) pode criar contas com papel elevado
+  if (input.role !== "employee" && currentProfile.role !== "admin") {
+    throw new Error("Somente o CEO pode criar contas de gerente ou financeiro.");
   }
 
   const admin = createAdminClient();

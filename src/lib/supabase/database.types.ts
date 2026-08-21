@@ -5,7 +5,7 @@
 export type ContactType = "cliente" | "lead";
 export type ContactStatus = "pending" | "done";
 export type DispatchStatus = "scheduled" | "sent" | "replied" | "failed";
-export type ProfileRole = "employee" | "admin" | "manager";
+export type ProfileRole = "employee" | "admin" | "manager" | "financeiro";
 
 export interface Database {
   public: {
@@ -40,6 +40,9 @@ export interface Database {
           next_contact_date: string;
           status: ContactStatus;
           last_purchase_value: number | null;
+          lead_interest_value: number | null;
+          converted: boolean;
+          converted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -54,6 +57,9 @@ export interface Database {
           next_contact_date: string;
           status?: ContactStatus;
           last_purchase_value?: number | null;
+          lead_interest_value?: number | null;
+          converted?: boolean;
+          converted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -155,6 +161,47 @@ export interface Database {
           },
           {
             foreignKeyName: "employee_notices_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      financial_entries: {
+        Row: {
+          id: string;
+          employee_id: string;
+          week_start_date: string;
+          faturamento: number;
+          custo_operacional: number;
+          custo_anuncios: number;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          employee_id: string;
+          week_start_date: string;
+          faturamento: number;
+          custo_operacional: number;
+          custo_anuncios: number;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["financial_entries"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "financial_entries_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "financial_entries_created_by_fkey";
             columns: ["created_by"];
             isOneToOne: false;
             referencedRelation: "profiles";

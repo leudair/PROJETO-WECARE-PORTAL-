@@ -24,6 +24,7 @@ export const ContactInputSchema = z
     attemptStage: z.coerce.number().int().min(2).max(6).optional(),
     nextContactDate: z.string().date(),
     lastPurchaseValue: z.coerce.number().min(0, "Valor não pode ser negativo.").optional(),
+    leadInterestValue: z.coerce.number().min(0, "Valor não pode ser negativo.").optional(),
   })
   .refine((data) => data.contactType === "cliente" || data.attemptStage !== undefined, {
     message: "Selecione a tentativa (2ª a 6ª) para um lead.",
@@ -31,6 +32,10 @@ export const ContactInputSchema = z
   });
 
 export type ContactInput = z.infer<typeof ContactInputSchema>;
+
+// Valor assumido de "dinheiro na mesa" quando o lead nao demonstrou
+// interesse por um valor especifico — ver DAL de admin (dinheiro na mesa).
+export const DEFAULT_LEAD_INTEREST_VALUE = 50;
 
 export async function listOwnContacts() {
   const profile = await requireProfile();
@@ -58,8 +63,22 @@ export async function createContact(input: ContactInput) {
     contact_type: input.contactType,
     attempt_stage: input.contactType === "lead" ? input.attemptStage ?? null : null,
     next_contact_date: input.nextContactDate,
-    last_purchase_value: input.lastPurchaseValue ?? null,
+    last_purchase_value: input.contactType === "cliente" ? input.lastPurchaseValue ?? null : null,
+    lead_interest_value:
+      input.contactType === "lead" ? input.leadInterestValue ?? DEFAULT_LEAD_INTEREST_VALUE : null,
   });
+
+  if (error) throw error;
+}
+
+export async function markConverted(contactId: string) {
+  await requireProfile();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("contacts")
+    .update({ converted: true, converted_at: new Date().toISOString(), status: "done" })
+    .eq("id", contactId);
 
   if (error) throw error;
 }

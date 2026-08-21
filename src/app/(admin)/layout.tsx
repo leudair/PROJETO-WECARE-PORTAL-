@@ -30,6 +30,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/admin/templates" className="text-muted hover:text-foreground">
               Mensagens
             </Link>
+            <Link href="/financeiro" className="text-muted hover:text-foreground">
+              Financeiro
+            </Link>
           </nav>
           <div className="flex items-center gap-3 text-sm text-muted">
             <span>

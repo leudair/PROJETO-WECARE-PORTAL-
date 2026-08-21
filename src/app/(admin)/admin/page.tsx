@@ -34,7 +34,7 @@ export default async function AdminOverviewPage({
 }) {
   const { period: periodParam } = await searchParams;
   const period: SummaryPeriod = periodParam === "7d" || periodParam === "all" ? periodParam : "today";
-  const { rows, responseSummary } = await listOverview(period);
+  const { rows, responseSummary, moneyOnTable } = await listOverview(period);
 
   return (
     <div className="space-y-8">
@@ -108,6 +108,43 @@ export default async function AdminOverviewPage({
                       </span>
                     )}
                   </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-3">
+          <h2 className="text-sm font-semibold text-foreground">Dinheiro na mesa</h2>
+          <p className="text-xs text-muted">
+            Soma do valor de interesse dos leads ainda não convertidos, por funcionário — quem tem mais aqui
+            está convertendo pior e vale acompanhar de perto.
+          </p>
+        </div>
+        <div className="overflow-x-auto rounded-xl border border-border bg-surface">
+          <table className="w-full text-sm">
+            <thead className="bg-background text-left text-xs uppercase text-muted">
+              <tr>
+                <th className="px-4 py-2">Funcionário</th>
+                <th className="px-4 py-2">Leads em aberto</th>
+                <th className="px-4 py-2">Valor na mesa</th>
+              </tr>
+            </thead>
+            <tbody>
+              {moneyOnTable.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="px-4 py-6 text-center text-muted">
+                    Nenhum lead em aberto no momento.
+                  </td>
+                </tr>
+              )}
+              {moneyOnTable.map(({ employee, total, count }) => (
+                <tr key={employee.id} className="border-t border-border">
+                  <td className="px-4 py-2">{employee.full_name}</td>
+                  <td className="px-4 py-2 text-muted">{count}</td>
+                  <td className="px-4 py-2 font-semibold text-foreground">{formatCurrency(total)}</td>
                 </tr>
               ))}
             </tbody>

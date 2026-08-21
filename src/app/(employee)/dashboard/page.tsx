@@ -1,5 +1,6 @@
 import { listOwnContacts } from "@/lib/data/contacts";
 import { ContactForm } from "./contact-form";
+import { markConvertedAction } from "./actions";
 
 function formatDate(iso: string) {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("pt-BR");
@@ -27,12 +28,13 @@ export default async function DashboardPage() {
                 <th className="px-4 py-2">Telefone</th>
                 <th className="px-4 py-2">Última compra</th>
                 <th className="px-4 py-2">Contato em</th>
+                <th className="px-4 py-2">Lead</th>
               </tr>
             </thead>
             <tbody>
               {contacts.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-muted">
+                  <td colSpan={6} className="px-4 py-6 text-center text-muted">
                     Nenhum lembrete cadastrado ainda.
                   </td>
                 </tr>
@@ -53,6 +55,24 @@ export default async function DashboardPage() {
                     {contact.last_purchase_value != null ? formatCurrency(contact.last_purchase_value) : "—"}
                   </td>
                   <td className="px-4 py-2 text-muted">{formatDate(contact.next_contact_date)}</td>
+                  <td className="px-4 py-2">
+                    {contact.contact_type !== "lead" ? (
+                      "—"
+                    ) : contact.converted ? (
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">
+                        Convertido ✓
+                      </span>
+                    ) : (
+                      <form action={markConvertedAction.bind(null, contact.id)}>
+                        <button
+                          type="submit"
+                          className="rounded-md border border-border px-2 py-1 text-xs text-muted hover:bg-surface-2"
+                        >
+                          Marcar como convertido
+                        </button>
+                      </form>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

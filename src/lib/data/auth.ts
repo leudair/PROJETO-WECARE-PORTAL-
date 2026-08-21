@@ -41,3 +41,13 @@ export async function requireAdmin(): Promise<Profile> {
   }
   return profile;
 }
+
+// Financeiro so enxerga o painel financeiro — admin/manager tambem tem acesso
+// a ele, alem do resto que ja podiam ver.
+export async function requireFinance(): Promise<Profile> {
+  const profile = await requireProfile();
+  if (profile.role !== "admin" && profile.role !== "manager" && profile.role !== "financeiro") {
+    redirect("/");
+  }
+  return profile;
+}
