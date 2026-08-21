@@ -9,6 +9,10 @@ export const TAX_RATE = 0.15; // imposto
 export const COMMISSION_RATE = 0.025; // comissao
 export const VARIABLE_RATE = 0.045; // demais custos variaveis (22% medio total - 15% - 2,5%)
 
+// custo operacional nao pode passar disso em relacao ao faturamento da
+// semana — acima do limite, a UI mostra um alerta.
+export const CUSTO_OPERACIONAL_ALERT_PCT = 20;
+
 export interface FinancialBreakdown {
   faturamento: number;
   custoOperacional: number;

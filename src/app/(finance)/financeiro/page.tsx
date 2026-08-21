@@ -1,4 +1,4 @@
-import { listEmployeesForFinance, listFinancialEntries } from "@/lib/data/finance";
+import { CUSTO_OPERACIONAL_ALERT_PCT, listEmployeesForFinance, listFinancialEntries } from "@/lib/data/finance";
 import { EntryForm } from "./entry-form";
 import { EditEntryButton } from "./edit-entry-button";
 
@@ -21,20 +21,39 @@ function StatBox({
   amount,
   variant,
   subLabel,
+  alert,
 }: {
   label: string;
   amount: number;
   variant: "gain" | "cost" | "auto";
   subLabel?: string;
+  alert?: boolean;
 }) {
   const isPositive = variant === "gain" || (variant === "auto" && amount >= 0);
   const colorClass = isPositive ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400";
 
   return (
-    <div className="rounded-lg border border-border bg-background p-2">
+    <div
+      className={
+        alert
+          ? "rounded-lg border-2 border-red-400 bg-red-50 p-2 dark:border-red-800 dark:bg-red-950/30"
+          : "rounded-lg border border-border bg-background p-2"
+      }
+    >
       <p className="text-[10px] uppercase text-muted">{label}</p>
       <p className={`font-semibold ${colorClass}`}>{formatCurrency(amount)}</p>
-      {subLabel && <p className="text-[10px] text-muted">{subLabel}</p>}
+      {subLabel && (
+        <p
+          className={
+            alert
+              ? "text-[10px] font-semibold text-red-700 dark:text-red-400"
+              : "text-[10px] text-muted"
+          }
+        >
+          {alert && "🔔 "}
+          {subLabel}
+        </p>
+      )}
     </div>
   );
 }
@@ -84,6 +103,7 @@ export default async function FinanceiroPage() {
                   amount={breakdown.custoOperacional}
                   variant="cost"
                   subLabel={`${breakdown.custoOperacionalPct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% do faturamento`}
+                  alert={breakdown.custoOperacionalPct > CUSTO_OPERACIONAL_ALERT_PCT}
                 />
                 <StatBox label="Imposto (15%)" amount={breakdown.imposto} variant="cost" />
                 <StatBox label="Comissão (2,5%)" amount={breakdown.comissao} variant="cost" />
