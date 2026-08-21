@@ -6,18 +6,26 @@ function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function formatDate(iso: string) {
-  return new Date(`${iso}T00:00:00`).toLocaleDateString("pt-BR");
+// entry.week_start_date e' sempre uma segunda-feira (ver lastMonday() no
+// formulario) — a semana de trabalho vai de segunda a sabado, entao o fim
+// e' sempre inicio + 5 dias.
+function formatWeekRange(weekStartIso: string) {
+  const start = new Date(`${weekStartIso}T00:00:00`);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 5);
+  return `${start.toLocaleDateString("pt-BR")} a ${end.toLocaleDateString("pt-BR")}`;
 }
 
 function StatBox({
   label,
   amount,
   variant,
+  subLabel,
 }: {
   label: string;
   amount: number;
   variant: "gain" | "cost" | "auto";
+  subLabel?: string;
 }) {
   const isPositive = variant === "gain" || (variant === "auto" && amount >= 0);
   const colorClass = isPositive ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400";
@@ -26,6 +34,7 @@ function StatBox({
     <div className="rounded-lg border border-border bg-background p-2">
       <p className="text-[10px] uppercase text-muted">{label}</p>
       <p className={`font-semibold ${colorClass}`}>{formatCurrency(amount)}</p>
+      {subLabel && <p className="text-[10px] text-muted">{subLabel}</p>}
     </div>
   );
 }
@@ -58,7 +67,7 @@ export default async function FinanceiroPage() {
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-1">
                 <h3 className="font-semibold text-foreground">{employeeName}</h3>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted">Semana de {formatDate(entry.week_start_date)}</span>
+                  <span className="text-xs text-muted">Semana de {formatWeekRange(entry.week_start_date)}</span>
                   <EditEntryButton
                     employeeId={entry.employee_id}
                     weekStartDate={entry.week_start_date}
@@ -70,7 +79,12 @@ export default async function FinanceiroPage() {
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                 <StatBox label="Faturamento" amount={breakdown.faturamento} variant="gain" />
-                <StatBox label="Custo operacional" amount={breakdown.custoOperacional} variant="cost" />
+                <StatBox
+                  label="Custo operacional"
+                  amount={breakdown.custoOperacional}
+                  variant="cost"
+                  subLabel={`${breakdown.custoOperacionalPct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% do faturamento`}
+                />
                 <StatBox label="Imposto (15%)" amount={breakdown.imposto} variant="cost" />
                 <StatBox label="Comissão (2,5%)" amount={breakdown.comissao} variant="cost" />
                 <StatBox label="Variável (4,5%)" amount={breakdown.variavel} variant="cost" />

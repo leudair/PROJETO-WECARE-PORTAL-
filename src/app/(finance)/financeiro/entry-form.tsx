@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useActionState } from "react";
 import { saveFinancialEntryAction } from "./actions";
 
@@ -11,8 +12,20 @@ function lastMonday(): string {
   return d.toISOString().slice(0, 10);
 }
 
+// semana de trabalho vai de segunda a sabado (6 dias) — mostra o intervalo
+// completo assim que o financeiro escolhe a segunda-feira, pra confirmar
+// visualmente qual periodo esta lancando antes de salvar.
+function formatWeekRange(weekStartIso: string) {
+  const start = new Date(`${weekStartIso}T00:00:00`);
+  if (Number.isNaN(start.getTime())) return "";
+  const end = new Date(start);
+  end.setDate(end.getDate() + 5);
+  return `${start.toLocaleDateString("pt-BR")} a ${end.toLocaleDateString("pt-BR")}`;
+}
+
 export function EntryForm({ employees }: { employees: { id: string; full_name: string }[] }) {
   const [state, formAction, pending] = useActionState(saveFinancialEntryAction, undefined);
+  const [weekStart, setWeekStart] = useState(lastMonday());
 
   return (
     <form action={formAction} className="space-y-4 rounded-xl border border-border bg-surface p-6">
@@ -43,9 +56,11 @@ export function EntryForm({ employees }: { employees: { id: string; full_name: s
             type="date"
             name="weekStartDate"
             required
-            defaultValue={lastMonday()}
+            value={weekStart}
+            onChange={(e) => setWeekStart(e.target.value)}
             className="w-full rounded-md border border-border px-3 py-2 text-sm"
           />
+          {weekStart && <p className="text-xs text-muted">Período: {formatWeekRange(weekStart)}</p>}
         </div>
       </div>
 

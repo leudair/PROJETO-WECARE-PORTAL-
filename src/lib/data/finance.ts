@@ -12,6 +12,7 @@ export const VARIABLE_RATE = 0.045; // demais custos variaveis (22% medio total 
 export interface FinancialBreakdown {
   faturamento: number;
   custoOperacional: number;
+  custoOperacionalPct: number;
   custoAnuncios: number;
   imposto: number;
   comissao: number;
@@ -30,10 +31,16 @@ export function computeFinancials(input: {
   const variavel = input.faturamento * VARIABLE_RATE;
   const saldoOperacao = input.faturamento - input.custoOperacional - imposto - comissao - variavel;
   const lucroLiquido = saldoOperacao - input.custoAnuncios;
+  // ao contrario de imposto/comissao/variavel (percentuais fixos do regime),
+  // esse aqui e' so informativo — mostra quanto do faturamento da semana foi
+  // consumido pelo custo operacional, pra acompanhar se esta subindo ou
+  // descendo semana a semana.
+  const custoOperacionalPct = input.faturamento > 0 ? (input.custoOperacional / input.faturamento) * 100 : 0;
 
   return {
     faturamento: input.faturamento,
     custoOperacional: input.custoOperacional,
+    custoOperacionalPct,
     custoAnuncios: input.custoAnuncios,
     imposto,
     comissao,
