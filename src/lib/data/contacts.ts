@@ -71,13 +71,32 @@ export async function createContact(input: ContactInput) {
   if (error) throw error;
 }
 
-export async function markConverted(contactId: string) {
+export async function markConverted(contactId: string, saleValue: number) {
   await requireProfile();
   const supabase = await createClient();
 
   const { error } = await supabase
     .from("contacts")
-    .update({ converted: true, converted_at: new Date().toISOString(), status: "done" })
+    .update({
+      converted: true,
+      converted_at: new Date().toISOString(),
+      status: "done",
+      last_purchase_value: saleValue,
+    })
+    .eq("id", contactId);
+
+  if (error) throw error;
+}
+
+// Corrige o valor depois de salvo — cliente ou lead ja convertido. Cobre o
+// caso do lead salvo com o padrao de R$50 que depois fecha por outro valor.
+export async function updatePurchaseValue(contactId: string, value: number) {
+  await requireProfile();
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("contacts")
+    .update({ last_purchase_value: value })
     .eq("id", contactId);
 
   if (error) throw error;

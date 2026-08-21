@@ -1,14 +1,11 @@
-import { listOwnContacts } from "@/lib/data/contacts";
+import { DEFAULT_LEAD_INTEREST_VALUE, listOwnContacts } from "@/lib/data/contacts";
 import { ContactForm } from "./contact-form";
-import { markConvertedAction } from "./actions";
+import { ConvertLeadButton } from "./convert-button";
+import { PurchaseValue } from "./purchase-value";
 import { Podium } from "./podium";
 
 function formatDate(iso: string) {
   return new Date(`${iso}T00:00:00`).toLocaleDateString("pt-BR");
-}
-
-function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 export default async function DashboardPage() {
@@ -53,10 +50,8 @@ export default async function DashboardPage() {
                   </td>
                   <td className="px-4 py-2 text-muted">{contact.phone}</td>
                   <td className="px-4 py-2">
-                    {contact.last_purchase_value != null ? (
-                      <span className="font-semibold text-green-700 dark:text-green-400">
-                        {formatCurrency(contact.last_purchase_value)}
-                      </span>
+                    {contact.contact_type === "cliente" || contact.converted ? (
+                      <PurchaseValue contactId={contact.id} value={contact.last_purchase_value} />
                     ) : (
                       <span className="text-muted">—</span>
                     )}
@@ -70,14 +65,10 @@ export default async function DashboardPage() {
                         Convertido ✓
                       </span>
                     ) : (
-                      <form action={markConvertedAction.bind(null, contact.id)}>
-                        <button
-                          type="submit"
-                          className="rounded-md border border-border px-2 py-1 text-xs text-muted hover:bg-surface-2"
-                        >
-                          Marcar como convertido
-                        </button>
-                      </form>
+                      <ConvertLeadButton
+                        contactId={contact.id}
+                        suggestedValue={contact.lead_interest_value ?? DEFAULT_LEAD_INTEREST_VALUE}
+                      />
                     )}
                   </td>
                 </tr>

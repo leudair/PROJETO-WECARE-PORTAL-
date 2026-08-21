@@ -1,7 +1,8 @@
 "use server";
 
+import * as z from "zod";
 import { revalidatePath } from "next/cache";
-import { ContactInputSchema, createContact, markConverted } from "@/lib/data/contacts";
+import { ContactInputSchema, createContact, markConverted, updatePurchaseValue } from "@/lib/data/contacts";
 import { markNoticeRead } from "@/lib/data/notices";
 
 export async function dismissNoticeAction(noticeId: string) {
@@ -10,8 +11,50 @@ export async function dismissNoticeAction(noticeId: string) {
   revalidatePath("/admin");
 }
 
-export async function markConvertedAction(contactId: string) {
-  await markConverted(contactId);
+const SaleValueSchema = z.coerce.number().min(0, "Valor não pode ser negativo.");
+
+export type MarkConvertedState = { error?: string } | undefined;
+
+export async function markConvertedAction(
+  contactId: string,
+  _state: MarkConvertedState,
+  formData: FormData
+): Promise<MarkConvertedState> {
+  const parsed = SaleValueSchema.safeParse(formData.get("saleValue"));
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Valor inválido." };
+  }
+
+  try {
+    await markConverted(contactId, parsed.data);
+  } catch {
+    return { error: "Não foi possível salvar. Tente novamente." };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/admin");
+}
+
+export type UpdatePurchaseValueState = { error?: string } | undefined;
+
+export async function updatePurchaseValueAction(
+  contactId: string,
+  _state: UpdatePurchaseValueState,
+  formData: FormData
+): Promise<UpdatePurchaseValueState> {
+  const parsed = SaleValueSchema.safeParse(formData.get("value"));
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Valor inválido." };
+  }
+
+  try {
+    await updatePurchaseValue(contactId, parsed.data);
+  } catch {
+    return { error: "Não foi possível salvar. Tente novamente." };
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/admin");
 }

@@ -1,5 +1,6 @@
 import { listEmployeesForFinance, listFinancialEntries } from "@/lib/data/finance";
 import { EntryForm } from "./entry-form";
+import { EditEntryButton } from "./edit-entry-button";
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -56,7 +57,16 @@ export default async function FinanceiroPage() {
             <div key={entry.id} className="rounded-xl border border-border bg-surface p-4">
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-1">
                 <h3 className="font-semibold text-foreground">{employeeName}</h3>
-                <span className="text-xs text-muted">Semana de {formatDate(entry.week_start_date)}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted">Semana de {formatDate(entry.week_start_date)}</span>
+                  <EditEntryButton
+                    employeeId={entry.employee_id}
+                    weekStartDate={entry.week_start_date}
+                    faturamento={entry.faturamento}
+                    custoOperacional={entry.custo_operacional}
+                    custoAnuncios={entry.custo_anuncios}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                 <StatBox label="Faturamento" amount={breakdown.faturamento} variant="gain" />
