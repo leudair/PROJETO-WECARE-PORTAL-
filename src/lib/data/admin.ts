@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "./auth";
 import { todayInSaoPaulo } from "@/lib/date";
+import { DEFAULT_LEAD_INTEREST_VALUE } from "./contacts";
 
 export type SummaryPeriod = "today" | "7d" | "all";
 
@@ -102,7 +103,7 @@ export async function listOverview(period: SummaryPeriod = "today") {
   for (const contact of contacts) {
     if (contact.contact_type !== "lead" || contact.converted) continue;
     const current = moneyOnTableByEmployee.get(contact.owner_id) ?? { total: 0, count: 0 };
-    current.total += contact.lead_interest_value ?? 0;
+    current.total += contact.lead_interest_value ?? DEFAULT_LEAD_INTEREST_VALUE;
     current.count += 1;
     moneyOnTableByEmployee.set(contact.owner_id, current);
   }
