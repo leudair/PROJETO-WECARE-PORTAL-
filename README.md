@@ -44,6 +44,16 @@ npm run dev
 - `CRON_SECRET`: gere outro valor aleatório (`openssl rand -hex 32`), diferente do `ZAPI_WEBHOOK_SECRET`.
 - O `vercel.json` já agenda `/api/cron/dispatch-reminders` todo dia às 09:00 (horário de Brasília). A Vercel injeta automaticamente o header `Authorization: Bearer $CRON_SECRET` nesse tipo de rota — basta ter a env var `CRON_SECRET` configurada no projeto Vercel.
 
+## 4. Recuperação de senha ("Esqueci minha senha")
+
+1. Em **Authentication > URL Configuration**, confira se **Site URL** está com o domínio de produção (ex: `https://projeto-wecare-portal.vercel.app`), não `http://localhost:3000`.
+2. Em **Authentication > Email Templates > Reset Password**, troque o link do template para usar `{{ .TokenHash }}` em vez de `{{ .ConfirmationURL }}` — isso faz o link ir direto para a rota da aplicação (`/api/auth/confirm`) em vez de passar pelo domínio do próprio Supabase, e funciona mesmo se o link for aberto num aparelho diferente do que pediu a redefinição:
+   ```html
+   <a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/redefinir-senha">Redefinir senha</a>
+   ```
+
+Sem esse ajuste no template, o Supabase continua usando o link padrão (`{{ .ConfirmationURL }}`), que pode falhar se o link for aberto num navegador/aparelho diferente de onde a redefinição foi pedida.
+
 ## Papéis e acesso
 
 - **Funcionário** (`/dashboard`): cadastra e vê só os próprios clientes/leads, e consulta as mensagens-modelo do funil (somente leitura). Não vê se um lembrete foi respondido.
