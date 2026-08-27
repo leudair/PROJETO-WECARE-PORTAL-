@@ -1,24 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { Suspense, useActionState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useActionState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { login } from "./actions";
+import { updatePassword } from "./actions";
 
-function LinkInvalidoNotice() {
-  const searchParams = useSearchParams();
-  if (searchParams.get("erro") !== "link_invalido") return null;
-  return (
-    <p className="text-sm text-red-600">
-      Esse link de redefinição de senha é inválido ou expirou. Peça um novo em &quot;Esqueci minha senha&quot;.
-    </p>
-  );
-}
-
-export default function LoginPage() {
-  const [state, formAction, pending] = useActionState(login, undefined);
+export default function ResetPasswordPage() {
+  const [state, formAction, pending] = useActionState(updatePassword, undefined);
 
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-background px-4">
@@ -32,39 +20,37 @@ export default function LoginPage() {
         <div className="space-y-3">
           <Image src="/wecare-logo.png" alt="WeCare" width={140} height={60} className="h-10 w-auto" priority />
           <div>
-            <h1 className="text-xl font-semibold text-foreground">WeCare Portal</h1>
-            <p className="text-sm text-muted">Entre com sua conta para continuar.</p>
+            <h1 className="text-xl font-semibold text-foreground">Criar nova senha</h1>
+            <p className="text-sm text-muted">Escolha uma nova senha para sua conta.</p>
           </div>
-        </div>
-
-        <Suspense fallback={null}>
-          <LinkInvalidoNotice />
-        </Suspense>
-
-        <div className="space-y-1">
-          <label htmlFor="email" className="text-sm font-medium text-foreground">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
-          />
         </div>
 
         <div className="space-y-1">
           <label htmlFor="password" className="text-sm font-medium text-foreground">
-            Senha
+            Nova senha
           </label>
           <input
             id="password"
             name="password"
             type="password"
             required
-            autoComplete="current-password"
+            minLength={8}
+            autoComplete="new-password"
+            className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
+            Confirmar nova senha
+          </label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
             className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
           />
         </div>
@@ -76,12 +62,8 @@ export default function LoginPage() {
           disabled={pending}
           className="w-full rounded-md bg-primary py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
         >
-          {pending ? "Entrando..." : "Entrar"}
+          {pending ? "Salvando..." : "Salvar nova senha"}
         </button>
-
-        <Link href="/esqueci-senha" className="block text-center text-sm text-muted hover:text-foreground">
-          Esqueci minha senha
-        </Link>
       </form>
     </main>
   );

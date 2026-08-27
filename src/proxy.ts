@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { supabaseAnonKey, supabaseUrl } from "@/lib/supabase/env";
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/esqueci-senha"];
 
 // Checagem otimista de sessao (so le o cookie, sem consultar profiles/role
 // no banco) e responsavel por renovar o token do Supabase a cada request.
