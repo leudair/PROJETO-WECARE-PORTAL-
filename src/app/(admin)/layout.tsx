@@ -33,6 +33,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/financeiro" className="text-muted hover:text-foreground">
               Financeiro
             </Link>
+            <a
+              href="https://wecare-radar.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted hover:text-foreground"
+            >
+              Radar
+            </a>
           </nav>
           <div className="flex items-center gap-3 text-sm text-muted">
             <span>
