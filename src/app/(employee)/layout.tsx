@@ -27,9 +27,9 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
               href="https://wecare-radar.vercel.app"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted hover:text-foreground"
+              className="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
             >
-              Radar
+              📡 Radar
             </a>
           </nav>
           <div className="flex items-center gap-3 text-sm text-muted">
