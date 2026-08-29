@@ -41,7 +41,7 @@ function StatBox({
       }
     >
       <p className="text-[10px] uppercase text-muted">{label}</p>
-      <p className={`font-semibold ${colorClass}`}>{formatCurrency(amount)}</p>
+      <p className={`font-serif font-semibold tabular-nums ${colorClass}`}>{formatCurrency(amount)}</p>
       {subLabel && (
         <p
           className={
@@ -64,7 +64,7 @@ export default async function FinanceiroPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-lg font-semibold text-foreground">Financeiro</h1>
+        <h1 className="font-serif text-lg font-semibold text-foreground">Financeiro</h1>
         <p className="text-sm text-muted">
           Informe faturamento, custo operacional e custo de anúncios da semana — imposto, comissão,
           variável, saldo e lucro líquido são calculados automaticamente.

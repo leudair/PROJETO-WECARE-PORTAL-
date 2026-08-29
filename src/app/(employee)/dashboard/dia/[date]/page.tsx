@@ -24,7 +24,7 @@ export default async function DashboardDayPage({ params }: { params: Promise<{ d
         <Link href="/dashboard" className="text-xs text-primary hover:underline">
           ← Voltar pros meus lembretes
         </Link>
-        <h1 className="mt-1 text-lg font-semibold text-foreground">Lembretes de {formatDate(date)}</h1>
+        <h1 className="mt-1 font-serif text-lg font-semibold text-foreground">Lembretes de {formatDate(date)}</h1>
         <p className="text-sm text-muted">
           {contacts.length} lembrete{contacts.length === 1 ? "" : "s"} pra essa data.
         </p>

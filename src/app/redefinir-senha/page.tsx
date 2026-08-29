@@ -20,7 +20,7 @@ export default function ResetPasswordPage() {
         <div className="space-y-3">
           <Image src="/wecare-logo.png" alt="WeCare" width={140} height={60} className="h-10 w-auto" priority />
           <div>
-            <h1 className="text-xl font-semibold text-foreground">Criar nova senha</h1>
+            <h1 className="font-serif text-xl font-semibold text-foreground">Criar nova senha</h1>
             <p className="text-sm text-muted">Escolha uma nova senha para sua conta.</p>
           </div>
         </div>

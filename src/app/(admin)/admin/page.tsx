@@ -27,7 +27,7 @@ export default async function AdminOverviewPage({
     <div className="space-y-8">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-lg font-semibold text-foreground">Visão geral</h1>
+          <h1 className="font-serif text-lg font-semibold text-foreground">Visão geral</h1>
           <p className="text-sm text-muted">
             Todos os lembretes cadastrados pelos funcionários e o status de disparo/resposta.
           </p>
@@ -36,7 +36,7 @@ export default async function AdminOverviewPage({
           href="https://wecare-radar.vercel.app"
           target="_blank"
           rel="noopener noreferrer"
-          className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          className="shrink-0 rounded-lg bg-gradient-to-b from-primary to-[color-mix(in_srgb,var(--primary)_85%,black)] px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_2px_6px_rgba(0,0,0,0.25)] hover:opacity-90"
         >
           📡 Abrir WeCare Radar
         </a>
@@ -89,7 +89,7 @@ export default async function AdminOverviewPage({
                 <div key={employee.id} className="rounded-xl border border-border bg-surface p-4">
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="font-semibold text-foreground">{employee.full_name}</h3>
-                    <span className={`text-xl font-bold ${textColor}`}>
+                    <span className={`font-serif text-xl font-bold tabular-nums ${textColor}`}>
                       {responseRate === null ? "—" : `${pct}%`}
                     </span>
                   </div>
@@ -154,7 +154,9 @@ export default async function AdminOverviewPage({
                         {count} lead{count === 1 ? "" : "s"} em aberto
                       </span>
                     </div>
-                    <span className="font-bold text-red-700 dark:text-red-400">{formatCurrency(total)}</span>
+                    <span className="font-serif font-bold tabular-nums text-red-700 dark:text-red-400">
+                      {formatCurrency(total)}
+                    </span>
                   </div>
                 </div>
               ));
