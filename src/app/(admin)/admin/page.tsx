@@ -25,11 +25,21 @@ export default async function AdminOverviewPage({
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">Visão geral</h1>
-        <p className="text-sm text-muted">
-          Todos os lembretes cadastrados pelos funcionários e o status de disparo/resposta.
-        </p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-lg font-semibold text-foreground">Visão geral</h1>
+          <p className="text-sm text-muted">
+            Todos os lembretes cadastrados pelos funcionários e o status de disparo/resposta.
+          </p>
+        </div>
+        <a
+          href="https://wecare-radar.vercel.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+        >
+          📡 Abrir WeCare Radar
+        </a>
       </div>
 
       <div>

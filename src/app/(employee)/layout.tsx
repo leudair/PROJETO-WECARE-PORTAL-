@@ -23,6 +23,14 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
             <Link href="/dashboard/templates" className="text-muted hover:text-foreground">
               Mensagens
             </Link>
+            <a
+              href="https://wecare-radar.vercel.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted hover:text-foreground"
+            >
+              Radar
+            </a>
           </nav>
           <div className="flex items-center gap-3 text-sm text-muted">
             <span>{profile.full_name}</span>
