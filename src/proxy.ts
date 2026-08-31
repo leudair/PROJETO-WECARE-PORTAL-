@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { supabaseAnonKey, supabaseUrl } from "@/lib/supabase/env";
 import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
 
-const PUBLIC_PATHS = ["/login", "/esqueci-senha"];
+const PUBLIC_PATHS = ["/login", "/esqueci-senha", "/confirmar-redefinicao", "/redefinir-senha"];
 
 // Checagem otimista de sessao (so le o cookie, sem consultar profiles/role
 // no banco) e responsavel por renovar o token do Supabase a cada request.
