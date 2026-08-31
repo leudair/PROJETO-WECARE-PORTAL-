@@ -28,7 +28,13 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
 export async function requireProfile(): Promise<Profile> {
   const profile = await getCurrentProfile();
   if (!profile) {
-    redirect("/login");
+    // Sessao valida (ex: link de redefinicao/magic link) mas sem linha em
+    // profiles. Nao pode redirecionar pra /login aqui: como o usuario
+    // continua autenticado, o proxy bate ele de volta pra "/" por /login
+    // estar em PUBLIC_PATHS — e aqui em requireProfile() de novo, num loop
+    // infinito de redirecionamento. /sem-perfil fica fora de PUBLIC_PATHS,
+    // entao renderiza normalmente mesmo com sessao ativa.
+    redirect("/sem-perfil");
   }
   return profile;
 }
