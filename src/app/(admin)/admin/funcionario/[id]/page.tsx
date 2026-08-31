@@ -50,7 +50,7 @@ export default async function EmployeeContactsPage({
           ← Voltar pra Visão geral
         </Link>
         <div className="mt-1 flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-lg font-semibold text-foreground">{employee.full_name}</h1>
+          <h1 className="font-serif text-lg font-semibold text-foreground">{employee.full_name}</h1>
           <NoticeForm employeeId={employee.id} />
         </div>
         <p className="text-sm text-muted">

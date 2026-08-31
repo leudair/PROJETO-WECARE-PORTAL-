@@ -7,7 +7,7 @@ export default async function AdminTemplatesPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-lg font-semibold text-foreground">Mensagens do funil de lead</h1>
+        <h1 className="font-serif text-lg font-semibold text-foreground">Mensagens do funil de lead</h1>
         <p className="text-sm text-muted">
           Texto sugerido para cada tentativa de contato com um lead. Os funcionários só copiam e colam.
         </p>

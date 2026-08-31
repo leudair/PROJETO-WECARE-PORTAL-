@@ -18,7 +18,7 @@ export default function ForgotPasswordPage() {
         <div className="space-y-3">
           <Image src="/wecare-logo.png" alt="WeCare" width={140} height={60} className="h-10 w-auto" priority />
           <div>
-            <h1 className="text-xl font-semibold text-foreground">Esqueci minha senha</h1>
+            <h1 className="font-serif text-xl font-semibold text-foreground">Esqueci minha senha</h1>
             <p className="text-sm text-muted">
               Informe seu email de login e enviaremos um link para você criar uma nova senha.
             </p>
