@@ -3,14 +3,14 @@ import { createServerClient } from "@supabase/ssr";
 import { supabaseAnonKey, supabaseUrl } from "@/lib/supabase/env";
 import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
 
-const PUBLIC_PATHS = [
-  "/login",
-  "/esqueci-senha",
-  "/confirmar-redefinicao",
-  "/redefinir-senha",
-  "/entrar-com-email",
-  "/confirmar-entrada",
-];
+const PUBLIC_PATHS = ["/login", "/esqueci-senha", "/confirmar-redefinicao", "/entrar-com-email", "/confirmar-entrada"];
+
+// /redefinir-senha nao entra em PUBLIC_PATHS de proposito: ela so funciona
+// com a sessao de recuperacao criada pelo clique em /confirmar-redefinicao
+// (ver confirmar-redefinicao/actions.ts). Como PUBLIC_PATHS redireciona
+// qualquer usuario JA autenticado (inclusive com sessao de recuperacao) para
+// "/", colocar essa rota na lista faz o proprio clique de confirmacao cair
+// direto na pagina principal em vez de abrir o formulario de nova senha.
 
 // Checagem otimista de sessao (so le o cookie, sem consultar profiles/role
 // no banco) e responsavel por renovar o token do Supabase a cada request.
