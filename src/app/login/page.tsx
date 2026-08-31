@@ -82,6 +82,9 @@ export default function LoginPage() {
         <Link href="/esqueci-senha" className="block text-center text-sm text-muted hover:text-foreground">
           Esqueci minha senha
         </Link>
+        <Link href="/entrar-com-email" className="block text-center text-sm text-muted hover:text-foreground">
+          Entrar só com e-mail (sem senha)
+        </Link>
       </form>
     </main>
   );
