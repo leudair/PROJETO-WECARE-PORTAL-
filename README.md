@@ -54,6 +54,17 @@ npm run dev
 
 Sem esse ajuste no template, o Supabase continua usando o link padrão (`{{ .ConfirmationURL }}`), que pode falhar se o link for aberto num navegador/aparelho diferente de onde a redefinição foi pedida.
 
+## 5. Login com Google
+
+O botão "Continuar com Google" (`src/app/login/page.tsx`) usa `supabase.auth.signInWithOAuth()` e a rota `src/app/api/auth/callback/route.ts` pra trocar o código do Google pela sessão. Precisa de duas configurações manuais antes de funcionar:
+
+1. **Google Cloud Console** ([console.cloud.google.com](https://console.cloud.google.com)) → *APIs & Services > Credentials* → criar um **OAuth client ID** do tipo **Web application**.
+   - Em **Authorized redirect URIs**, adicione a URL de callback que o Supabase mostra na tela do passo 2 (formato `https://<PROJECT_REF>.supabase.co/auth/v1/callback`).
+   - Copie o **Client ID** e o **Client Secret** gerados.
+2. Em **Authentication > Providers > Google** no painel do Supabase, ative o provider e cole o Client ID e Client Secret do passo 1.
+
+Sem essa configuração, o clique no botão redireciona pro Google mas volta com erro (`?erro=google_invalido` na tela de login).
+
 ## Papéis e acesso
 
 - **Funcionário** (`/dashboard`): cadastra e vê só os próprios clientes/leads, e consulta as mensagens-modelo do funil (somente leitura). Não vê se um lembrete foi respondido.
