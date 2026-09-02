@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Suspense, useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PasswordInput } from "@/components/password-input";
 import { createClient } from "@/lib/supabase/client";
 import { login } from "./actions";
 
@@ -80,14 +81,7 @@ export default function LoginPage() {
           <label htmlFor="password" className="text-sm font-medium text-foreground">
             Senha
           </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            autoComplete="current-password"
-            className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
-          />
+          <PasswordInput id="password" name="password" required autoComplete="current-password" />
         </div>
 
         {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
