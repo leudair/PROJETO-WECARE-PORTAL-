@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useActionState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PasswordInput } from "@/components/password-input";
 import { updatePassword } from "./actions";
 
 export default function ResetPasswordPage() {
@@ -29,30 +30,14 @@ export default function ResetPasswordPage() {
           <label htmlFor="password" className="text-sm font-medium text-foreground">
             Nova senha
           </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
-          />
+          <PasswordInput id="password" name="password" required minLength={8} autoComplete="new-password" />
         </div>
 
         <div className="space-y-1">
           <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
             Confirmar nova senha
           </label>
-          <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
-          />
+          <PasswordInput id="confirmPassword" name="confirmPassword" required minLength={8} autoComplete="new-password" />
         </div>
 
         {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
