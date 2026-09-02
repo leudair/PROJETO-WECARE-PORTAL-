@@ -14,5 +14,5 @@ jobs:
     steps:
       - name: Chamar rota de disparo
         run: |
-          curl -sf -X GET "https://projeto-wecare-portal.vercel.app/api/cron/dispatch-reminders" \
+          curl -sf -X GET "https://portalwecare.com.br/api/cron/dispatch-reminders" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
