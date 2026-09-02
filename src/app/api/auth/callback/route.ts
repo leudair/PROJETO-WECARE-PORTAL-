@@ -20,7 +20,14 @@ export async function GET(request: NextRequest) {
     if (!error) {
       return NextResponse.redirect(`${origin}/`);
     }
+    // DEBUG TEMPORARIO: expoe a mensagem de erro real na URL pra diagnosticar
+    // por que o login com Google esta falhando em producao. Remover depois.
+    console.error("exchangeCodeForSession falhou:", error);
+    return NextResponse.redirect(
+      `${origin}/login?erro=google_invalido&debug=${encodeURIComponent(error.message)}`,
+    );
   }
 
-  return NextResponse.redirect(`${origin}/login?erro=google_invalido`);
+  console.error("Callback do Google sem 'code' na URL:", request.url);
+  return NextResponse.redirect(`${origin}/login?erro=google_invalido&debug=no_code`);
 }
