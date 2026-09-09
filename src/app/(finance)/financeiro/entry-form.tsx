@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo } from "react";
 import { saveFinancialEntryAction } from "./actions";
+import { EmployeeSelect } from "./employee-select";
 
 // evita digitar/escolher uma data que nao seja segunda-feira (foi o que
 // gerou confusao antes: dava pra selecionar qualquer dia no calendario e o
@@ -54,21 +55,7 @@ export function EntryForm({ employees }: { employees: { id: string; full_name: s
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground">Funcionário</label>
-          <select
-            name="employeeId"
-            required
-            defaultValue=""
-            className="w-full rounded-md border border-border px-3 py-2 text-sm"
-          >
-            <option value="" disabled>
-              Selecione
-            </option>
-            {employees.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.full_name}
-              </option>
-            ))}
-          </select>
+          <EmployeeSelect employees={employees} />
         </div>
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground">Semana</label>
