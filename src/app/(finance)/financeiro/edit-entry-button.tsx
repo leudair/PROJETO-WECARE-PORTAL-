@@ -6,12 +6,14 @@ import { saveFinancialEntryAction } from "./actions";
 export function EditEntryButton({
   employeeId,
   weekStartDate,
+  weekEndDate,
   faturamento,
   custoOperacional,
   custoAnuncios,
 }: {
   employeeId: string;
   weekStartDate: string;
+  weekEndDate: string;
   faturamento: number;
   custoOperacional: number;
   custoAnuncios: number;
@@ -31,6 +33,7 @@ export function EditEntryButton({
     <form action={formAction} className="mt-3 space-y-2 rounded-md border border-border bg-background p-3">
       <input type="hidden" name="employeeId" value={employeeId} />
       <input type="hidden" name="weekStartDate" value={weekStartDate} />
+      <input type="hidden" name="weekEndDate" value={weekEndDate} />
 
       <div className="grid grid-cols-3 gap-2">
         <div className="space-y-0.5">

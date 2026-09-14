@@ -91,13 +91,19 @@ export async function listFinancialEntries() {
   }));
 }
 
-export const FinancialEntrySchema = z.object({
-  employeeId: z.uuid(),
-  weekStartDate: z.string().date(),
-  faturamento: z.coerce.number().min(0, "Valor não pode ser negativo."),
-  custoOperacional: z.coerce.number().min(0, "Valor não pode ser negativo."),
-  custoAnuncios: z.coerce.number().min(0, "Valor não pode ser negativo."),
-});
+export const FinancialEntrySchema = z
+  .object({
+    employeeId: z.uuid(),
+    weekStartDate: z.string().date(),
+    weekEndDate: z.string().date(),
+    faturamento: z.coerce.number().min(0, "Valor não pode ser negativo."),
+    custoOperacional: z.coerce.number().min(0, "Valor não pode ser negativo."),
+    custoAnuncios: z.coerce.number().min(0, "Valor não pode ser negativo."),
+  })
+  .refine((data) => data.weekEndDate >= data.weekStartDate, {
+    message: "A data de saída não pode ser antes da data de entrada.",
+    path: ["weekEndDate"],
+  });
 
 export async function upsertFinancialEntry(input: z.infer<typeof FinancialEntrySchema>) {
   const profile = await requireFinance();
@@ -107,6 +113,7 @@ export async function upsertFinancialEntry(input: z.infer<typeof FinancialEntryS
     {
       employee_id: input.employeeId,
       week_start_date: input.weekStartDate,
+      week_end_date: input.weekEndDate,
       faturamento: input.faturamento,
       custo_operacional: input.custoOperacional,
       custo_anuncios: input.custoAnuncios,
