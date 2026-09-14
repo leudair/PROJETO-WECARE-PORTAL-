@@ -84,7 +84,7 @@ export default async function FinanceiroPage() {
           {rows.map(({ entry, employeeName, breakdown }) => (
             <div key={entry.id} className="rounded-xl border border-border bg-surface p-4">
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-1">
-                <h3 className="font-semibold text-foreground">{employeeName}</h3>
+                <h3 className="font-semibold text-red-700 dark:text-red-400">{employeeName}</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted">Semana de {formatWeekRange(entry.week_start_date)}</span>
                   <EditEntryButton
