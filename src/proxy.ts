@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { supabaseAnonKey, supabaseUrl } from "@/lib/supabase/env";
 import { supabaseCookieOptions } from "@/lib/supabase/cookie-options";
 
-const PUBLIC_PATHS = ["/login", "/esqueci-senha", "/confirmar-redefinicao"];
+const PUBLIC_PATHS = ["/login", "/esqueci-senha", "/confirmar-redefinicao", "/entrar-com-email", "/confirmar-entrada"];
 
 // /redefinir-senha nao entra em PUBLIC_PATHS de proposito: ela so funciona
 // com a sessao de recuperacao criada pelo clique em /confirmar-redefinicao
