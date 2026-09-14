@@ -43,7 +43,7 @@ export function EmployeeSelect({ employees }: { employees: { id: string; full_na
                 setSelectedId(e.id);
                 setOpen(false);
               }}
-              className="block w-full rounded-md border border-red-300 bg-red-50 px-3 py-2 text-left text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-950/50"
+              className="block w-full rounded-md border border-red-300 bg-red-50 px-3 py-2 text-left text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-950/30 dark:text-white dark:hover:bg-red-950/50"
             >
               {e.full_name}
             </button>

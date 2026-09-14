@@ -1,16 +1,13 @@
 "use client";
 
-import { useActionState, useMemo } from "react";
+import { useActionState, useState } from "react";
 import { saveFinancialEntryAction } from "./actions";
 import { EmployeeSelect } from "./employee-select";
 
-// evita digitar/escolher uma data que nao seja segunda-feira (foi o que
-// gerou confusao antes: dava pra selecionar qualquer dia no calendario e o
-// "periodo" calculado ficava errado). Em vez de um <input type="date">
-// livre, o financeiro escolhe entre as ultimas semanas + a semana atual,
-// ja com o intervalo completo (segunda a sabado) escrito no rotulo — o
-// faturamento e' sempre lancado no sabado, entao a "semana atual" ja vem
-// selecionada por padrao.
+// Datas de entrada/saida do periodo sao livres (calendario nativo do
+// navegador) — antes eram travadas num dropdown de "semana" pra evitar erro
+// de calculo, mas isso limitava demais. O padrao inicial continua sendo a
+// ultima segunda a sabado, so que agora da pra ajustar livremente.
 function toDateInputValue(d: Date): string {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -26,51 +23,50 @@ function mondayOfCurrentWeek(): Date {
   return d;
 }
 
-const WEEKS_BACK = 3;
-
-function buildWeekOptions(): { value: string; label: string }[] {
-  const currentMonday = mondayOfCurrentWeek();
-
-  const options = [];
-  for (let i = 0; i >= -WEEKS_BACK; i--) {
-    const monday = new Date(currentMonday);
-    monday.setDate(currentMonday.getDate() + i * 7);
-    const saturday = new Date(monday);
-    saturday.setDate(monday.getDate() + 5);
-    const range = `${monday.toLocaleDateString("pt-BR")} a ${saturday.toLocaleDateString("pt-BR")}`;
-    const tag = i === 0 ? " (semana atual)" : i === -1 ? " (semana passada)" : "";
-    options.push({ value: toDateInputValue(monday), label: `${range}${tag}` });
-  }
-  return options;
+function defaultStartEnd(): { start: string; end: string } {
+  const monday = mondayOfCurrentWeek();
+  const saturday = new Date(monday);
+  saturday.setDate(monday.getDate() + 5);
+  return { start: toDateInputValue(monday), end: toDateInputValue(saturday) };
 }
 
 export function EntryForm({ employees }: { employees: { id: string; full_name: string }[] }) {
   const [state, formAction, pending] = useActionState(saveFinancialEntryAction, undefined);
-  const weekOptions = useMemo(() => buildWeekOptions(), []);
+  const [defaults] = useState(defaultStartEnd);
+  const [startDate, setStartDate] = useState(defaults.start);
 
   return (
     <form action={formAction} className="space-y-4 rounded-xl border border-border bg-surface p-6">
-      <h2 className="text-sm font-semibold text-foreground">Lançamento semanal</h2>
+      <h2 className="text-sm font-semibold text-foreground">Novo lançamento</h2>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground">Funcionário</label>
           <EmployeeSelect employees={employees} />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-foreground">Semana</label>
-          <select
-            name="weekStartDate"
-            required
-            defaultValue={weekOptions[0]?.value}
-            className="w-full rounded-md border border-border px-3 py-2 text-sm"
-          >
-            {weekOptions.map((week) => (
-              <option key={week.value} value={week.value}>
-                {week.label}
-              </option>
-            ))}
-          </select>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-foreground">Data de entrada</label>
+            <input
+              type="date"
+              name="weekStartDate"
+              required
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full rounded-md border border-border px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-foreground">Data de saída</label>
+            <input
+              type="date"
+              name="weekEndDate"
+              required
+              min={startDate}
+              defaultValue={defaults.end}
+              className="w-full rounded-md border border-border px-3 py-2 text-sm"
+            />
+          </div>
         </div>
       </div>
 
