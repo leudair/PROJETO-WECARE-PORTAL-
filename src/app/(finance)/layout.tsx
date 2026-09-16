@@ -14,7 +14,15 @@ export default async function FinanceLayout({ children }: { children: React.Reac
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <nav className="flex items-center gap-4 text-sm">
             <Link href="/financeiro" className="flex items-center gap-2 font-semibold text-foreground">
-              <Image src="/wecare-logo.png" alt="WeCare" width={140} height={60} className="h-6 w-auto" priority />
+              <Image
+                src="/logo-animada.webp"
+                alt="WeCare"
+                width={200}
+                height={200}
+                className="h-8 w-auto"
+                priority
+                unoptimized
+              />
               Financeiro
             </Link>
             {canSeeAdmin && (

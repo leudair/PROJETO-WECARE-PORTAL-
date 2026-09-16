@@ -14,7 +14,15 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
         <div className="mx-auto flex max-w-3xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <nav className="flex items-center gap-4 overflow-x-auto text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Link href="/dashboard" className="flex shrink-0 items-center gap-2 whitespace-nowrap font-semibold text-foreground">
-              <Image src="/wecare-logo.png" alt="WeCare" width={140} height={60} className="h-6 w-auto" priority />
+              <Image
+                src="/logo-animada.webp"
+                alt="WeCare"
+                width={200}
+                height={200}
+                className="h-8 w-auto"
+                priority
+                unoptimized
+              />
               Portal
             </Link>
             <Link href="/dashboard" className="shrink-0 whitespace-nowrap text-muted hover:text-foreground">
