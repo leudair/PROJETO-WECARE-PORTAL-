@@ -105,7 +105,8 @@ export async function GET(request: NextRequest) {
   let dispatchCount = 0;
 
   for (const contact of pending) {
-    if (Date.now() - functionStart > functionBudgetMs) {
+    const elapsedMs = Date.now() - functionStart;
+    if (elapsedMs > functionBudgetMs) {
       // sem tempo pra mais nesta execucao — o resto fica pra proxima rodada do cron
       break;
     }
@@ -118,7 +119,15 @@ export async function GET(request: NextRequest) {
 
     if (dispatchCount > 0) {
       const jitter = 0.7 + Math.random() * 0.6; // 70%-130% do espacamento ideal
-      await sleep(idealGapSeconds * 1000 * jitter);
+      const sleepMs = idealGapSeconds * 1000 * jitter;
+      // se a espera sozinha estourasse o orcamento, a Vercel mataria a funcao
+      // a forca no meio do sleep (timeout) em vez da gente retornar 200 de
+      // forma graciosa — entao paramos aqui e deixamos o resto pro proximo
+      // tick do cron, que roda de poucos em poucos minutos.
+      if (sleepMs > functionBudgetMs - elapsedMs) {
+        break;
+      }
+      await sleep(sleepMs);
     }
     dispatchCount += 1;
 
