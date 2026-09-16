@@ -173,6 +173,7 @@ export interface Database {
           id: string;
           employee_id: string;
           week_start_date: string;
+          week_end_date: string;
           faturamento: number;
           custo_operacional: number;
           custo_anuncios: number;
@@ -184,6 +185,7 @@ export interface Database {
           id?: string;
           employee_id: string;
           week_start_date: string;
+          week_end_date: string;
           faturamento: number;
           custo_operacional: number;
           custo_anuncios: number;
@@ -219,6 +221,7 @@ export interface Database {
           full_name: string;
           faturamento: number;
           week_start_date: string;
+          week_end_date: string;
         }[];
       };
     };

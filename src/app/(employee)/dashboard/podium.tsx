@@ -4,12 +4,9 @@ function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-// semana de trabalho vai de segunda a sabado (6 dias) — mesma logica usada
-// no painel financeiro pra mostrar o periodo completo, nao so o inicio.
-function formatWeekRange(weekStartIso: string) {
+function formatWeekRange(weekStartIso: string, weekEndIso: string) {
   const start = new Date(`${weekStartIso}T00:00:00`);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 5);
+  const end = new Date(`${weekEndIso}T00:00:00`);
   return `${start.toLocaleDateString("pt-BR")} a ${end.toLocaleDateString("pt-BR")}`;
 }
 
@@ -29,7 +26,8 @@ export async function Podium() {
     <div>
       <h2 className="mb-1 text-sm font-semibold text-foreground">Pódio da semana</h2>
       <p className="mb-3 text-xs text-muted">
-        Faturamento oficial lançado pelo Financeiro · semana de {formatWeekRange(leaderboard[0].week_start_date)}. Vendas
+        Faturamento oficial lançado pelo Financeiro · semana de{" "}
+        {formatWeekRange(leaderboard[0].week_start_date, leaderboard[0].week_end_date)}. Vendas
         marcadas como convertidas entram aqui quando o Financeiro lançar o faturamento da semana.
       </p>
 

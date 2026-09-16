@@ -6,13 +6,9 @@ function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-// entry.week_start_date e' sempre uma segunda-feira (ver lastMonday() no
-// formulario) — a semana de trabalho vai de segunda a sabado, entao o fim
-// e' sempre inicio + 5 dias.
-function formatWeekRange(weekStartIso: string) {
+function formatWeekRange(weekStartIso: string, weekEndIso: string) {
   const start = new Date(`${weekStartIso}T00:00:00`);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 5);
+  const end = new Date(`${weekEndIso}T00:00:00`);
   return `${start.toLocaleDateString("pt-BR")} a ${end.toLocaleDateString("pt-BR")}`;
 }
 
@@ -66,7 +62,7 @@ export default async function FinanceiroPage() {
       <div>
         <h1 className="text-lg font-semibold text-foreground">Financeiro</h1>
         <p className="text-sm text-muted">
-          Informe faturamento, custo operacional e custo de anúncios da semana — imposto, comissão,
+          Informe faturamento, custo operacional e custo de anúncios do período — imposto, comissão,
           variável, saldo e lucro líquido são calculados automaticamente.
         </p>
       </div>
@@ -86,10 +82,13 @@ export default async function FinanceiroPage() {
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-1">
                 <h3 className="font-semibold text-red-700 dark:text-red-400">{employeeName}</h3>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted">Semana de {formatWeekRange(entry.week_start_date)}</span>
+                  <span className="text-xs text-muted">
+                    Período de {formatWeekRange(entry.week_start_date, entry.week_end_date)}
+                  </span>
                   <EditEntryButton
                     employeeId={entry.employee_id}
                     weekStartDate={entry.week_start_date}
+                    weekEndDate={entry.week_end_date}
                     faturamento={entry.faturamento}
                     custoOperacional={entry.custo_operacional}
                     custoAnuncios={entry.custo_anuncios}
