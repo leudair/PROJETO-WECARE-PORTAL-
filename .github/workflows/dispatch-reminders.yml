@@ -1,11 +1,16 @@
 name: Dispatch WhatsApp reminders
 
+# O AGENDAMENTO NAO MORA MAIS AQUI.
+# Este workflow pedia "*/5 9-14 * * *" (72 execucoes por dia) e o GitHub
+# Actions entregava 1 ou 2, nas horas 13-18 UTC — quase sempre FORA da janela
+# de 09:00-14:00 UTC que a rota exige, entao a rota respondia "fora da janela"
+# e nao mandava nada. Era essa a razao de so existirem 59 disparos em seis
+# semanas. O cron do GitHub Actions e' best-effort e e' atrasado/descartado
+# sob carga; nao serve pra isso.
+#
+# O agendamento agora e' o cron da Vercel (vercel.json), que dispara no
+# horario. Aqui fica apenas o acionamento manual.
 on:
-  schedule:
-    # a cada 5 minutos, 09:00-14:55 UTC = 06:00-11:55 horario de Brasilia.
-    # a propria rota decide nao fazer nada fora de 06:00-11:00 — essa faixa
-    # so garante cobertura de sobra nas bordas.
-    - cron: "*/5 9-14 * * *"
   workflow_dispatch:
     inputs:
       force:
@@ -13,15 +18,11 @@ on:
         type: boolean
         default: false
 
-# Este workflow e' o UNICO agendador do disparo. Antes havia tambem um cron no
-# vercel.json apontando pra mesma rota: as 09:00 UTC os dois disparavam juntos,
-# as duas execucoes liam a mesma lista de pendentes e o mesmo lembrete saia
-# duas vezes. O vercel.json foi removido junto com esta mudanca.
-#
-# concurrency evita o mesmo efeito entre ticks deste workflow: o cron do GitHub
-# Actions atrasa com frequencia e as vezes dispara execucoes em sequencia
-# imediata. cancel-in-progress: false porque matar uma execucao no meio
-# deixaria reservas de disparo penduradas em 'scheduled'.
+# cancel-in-progress: false porque matar uma execucao no meio deixaria reservas
+# de disparo penduradas em 'scheduled'. Mesmo que um acionamento manual caia
+# junto com um tick do cron da Vercel, nao sai mensagem duplicada: o disparo
+# reserva a linha em reminder_dispatches antes de enviar, e quem perde a
+# corrida no unique index desiste sem enviar (ver claimDispatch).
 concurrency:
   group: dispatch-reminders
   cancel-in-progress: false

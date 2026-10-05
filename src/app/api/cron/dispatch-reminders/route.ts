@@ -23,6 +23,10 @@ const FUNCTION_SAFETY_MARGIN_SECONDS = 10;
 // So dispara entre esses horarios (horario de Brasilia) — antes que os
 // funcionarios comecem o expediente (9h30), sem ser tao de madrugada que
 // pareca atividade automatizada.
+//
+// O cron em vercel.json ("*/5 9-13 * * *", UTC) cobre 06:00-10:55 de Brasilia,
+// ou seja cai inteiro dentro desta janela. O Brasil nao tem mais horario de
+// verao desde 2019, entao UTC-3 vale o ano todo e os dois nao se descolam.
 const WINDOW_START_SECONDS = 6 * 3600; // 06:00
 const WINDOW_END_SECONDS = 11 * 3600; // 11:00
 
@@ -35,10 +39,9 @@ const WINDOW_END_SECONDS = 11 * 3600; // 11:00
 // Agora cada invocacao manda um lote pequeno, e o tamanho do lote se ajusta
 // sozinho ao volume: pendentes ÷ ticks que ainda cabem na janela. Com pouca
 // gente vira 1 por tick (bem espacado); com muita gente sobe ate
-// MAX_DISPATCHES_PER_RUN. Se o agendador perder um tick (o cron do GitHub
-// Actions atrasa com frequencia), o tick seguinte ve menos ticks restantes e
-// manda um lote maior pra compensar.
-const SCHEDULER_TICK_SECONDS = 5 * 60; // ver .github/workflows/dispatch-reminders.yml
+// MAX_DISPATCHES_PER_RUN. Se um tick for perdido, o seguinte ve menos ticks
+// restantes e manda um lote maior pra compensar.
+const SCHEDULER_TICK_SECONDS = 5 * 60; // tem que casar com o cron em vercel.json
 const MAX_DISPATCHES_PER_RUN = 8;
 const GAP_SECONDS = 4; // dentro do lote, so pra nao virar rajada
 
