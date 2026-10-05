@@ -4,6 +4,7 @@ import { sendWhatsAppText } from "@/lib/zapi/client";
 import {
   buildReminderText,
   claimDispatch,
+  deferContactToNextDay,
   getTodayDispatchState,
   getDueContacts,
   getTemplateBody,
@@ -24,9 +25,12 @@ const FUNCTION_SAFETY_MARGIN_SECONDS = 10;
 // funcionarios comecem o expediente (9h30), sem ser tao de madrugada que
 // pareca atividade automatizada.
 //
-// O cron em vercel.json ("*/5 9-13 * * *", UTC) cobre 06:00-10:55 de Brasilia,
-// ou seja cai inteiro dentro desta janela. O Brasil nao tem mais horario de
-// verao desde 2019, entao UTC-3 vale o ano todo e os dois nao se descolam.
+// Quem chama essa rota de 5 em 5 min e' o pg_cron do Supabase
+// (supabase/migrations/0010_cron_dispatch_reminders.sql), com "*/5 9-13 * * *"
+// em UTC = 06:00-10:55 de Brasilia, inteiramente dentro desta janela. O cron
+// da Vercel nao serve: a conta e' Hobby, que so permite um disparo por dia.
+// O Brasil nao tem mais horario de verao desde 2019, entao UTC-3 vale o ano
+// todo e os dois nao se descolam.
 const WINDOW_START_SECONDS = 6 * 3600; // 06:00
 const WINDOW_END_SECONDS = 11 * 3600; // 11:00
 
@@ -41,7 +45,7 @@ const WINDOW_END_SECONDS = 11 * 3600; // 11:00
 // gente vira 1 por tick (bem espacado); com muita gente sobe ate
 // MAX_DISPATCHES_PER_RUN. Se um tick for perdido, o seguinte ve menos ticks
 // restantes e manda um lote maior pra compensar.
-const SCHEDULER_TICK_SECONDS = 5 * 60; // tem que casar com o cron em vercel.json
+const SCHEDULER_TICK_SECONDS = 5 * 60; // tem que casar com o cron em 0010_cron_dispatch_reminders.sql
 const MAX_DISPATCHES_PER_RUN = 8;
 const GAP_SECONDS = 4; // dentro do lote, so pra nao virar rajada
 
@@ -196,6 +200,10 @@ export async function GET(request: NextRequest) {
       try {
         const { zapiMessageId } = await sendWhatsAppText(owner.whatsapp_number, text);
         await markDispatchSent(claim.dispatchId, zapiMessageId);
+        // Sai da frente da fila: volta amanha, atras de quem esta mais
+        // atrasado. Sem isso a fila trava nos mesmos contatos (ver
+        // deferContactToNextDay).
+        await deferContactToNextDay(contact.id, today);
         results.push({ contactId: contact.id, status: "sent" });
       } catch (err) {
         // A reserva ja existe, entao aqui e' update — nao tem como colidir com

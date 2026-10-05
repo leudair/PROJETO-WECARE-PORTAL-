@@ -2,6 +2,8 @@ import "server-only";
 import { randomInt } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+import { addDays } from "@/lib/date";
+
 export { todayInSaoPaulo } from "@/lib/date";
 
 // Estas funcoes usam o client com service_role (ignora RLS) porque rodam
@@ -145,6 +147,25 @@ export async function markDispatchSent(dispatchId: string, zapiMessageId: string
     .from("reminder_dispatches")
     .update({ status: "sent", sent_at: new Date().toISOString(), zapi_message_id: zapiMessageId })
     .eq("id", dispatchId);
+
+  if (error) throw error;
+}
+
+// Empurra o contato pro dia seguinte depois de lembrado, mantendo pending.
+//
+// Sem isso, um contato que ninguem confirma fica com next_contact_date fixo no
+// passado e, com a ordenacao por mais-atrasado-primeiro, e' escolhido TODO DIA
+// pra sempre — foi o que aconteceu em producao: um contato lembrado 30 dias
+// seguidos enquanto centenas nunca foram tocados uma vez. Avancando a data, o
+// contato lembrado hoje passa pra tras de tudo que esta mais atrasado que ele,
+// e a fila gira pelo acervo inteiro em vez de travar nos primeiros.
+export async function deferContactToNextDay(contactId: string, fromDate: string) {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("contacts")
+    .update({ next_contact_date: addDays(fromDate, 1) })
+    .eq("id", contactId)
+    .eq("status", "pending"); // nao mexe em contato que foi concluido no meio
 
   if (error) throw error;
 }

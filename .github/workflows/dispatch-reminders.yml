@@ -8,8 +8,10 @@ name: Dispatch WhatsApp reminders
 # semanas. O cron do GitHub Actions e' best-effort e e' atrasado/descartado
 # sob carga; nao serve pra isso.
 #
-# O agendamento agora e' o cron da Vercel (vercel.json), que dispara no
-# horario. Aqui fica apenas o acionamento manual.
+# O agendamento agora e' o pg_cron do Supabase (migration 0010), que dispara
+# no horario. O cron da Vercel tambem nao serve: a conta e' Hobby, limitada a
+# um disparo por dia com precisao de ±59 min. Aqui fica so o acionamento
+# manual, que e' como se testa o envio.
 on:
   workflow_dispatch:
     inputs:
