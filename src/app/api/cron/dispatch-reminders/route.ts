@@ -81,13 +81,7 @@ function isAuthorized(request: NextRequest): boolean {
   return timingSafeEqual(a, b);
 }
 
-type DispatchStatus =
-  | "sent"
-  | "failed"
-  | "skipped"
-  | "claimed-by-other"
-  | "deferred"
-  | "employee-daily-cap";
+type DispatchStatus = "sent" | "failed" | "claimed-by-other";
 
 export async function GET(request: NextRequest) {
   if (!isAuthorized(request)) {
@@ -108,12 +102,28 @@ export async function GET(request: NextRequest) {
   const { contactIds: alreadyDispatched, countByEmployee } = await getTodayDispatchState(today);
   const pending = dueContacts.filter((contact) => !alreadyDispatched.has(contact.id));
 
-  const results: { contactId: string; status: DispatchStatus }[] = dueContacts
-    .filter((contact) => alreadyDispatched.has(contact.id))
-    .map((contact) => ({ contactId: contact.id, status: "skipped" as const }));
+  // Aplica o teto por funcionario percorrendo na ordem definida por
+  // getDueContacts (mais atrasado primeiro), pra que quem ficar de fora seja
+  // sempre o mais recente — e nao um contato qualquer.
+  const eligible: typeof pending = [];
+  const projectedByEmployee = new Map(countByEmployee);
+  for (const contact of pending) {
+    const used = projectedByEmployee.get(contact.owner_id) ?? 0;
+    if (used >= MAX_DISPATCHES_PER_EMPLOYEE_PER_DAY) continue;
+    projectedByEmployee.set(contact.owner_id, used + 1);
+    eligible.push(contact);
+  }
 
-  if (pending.length === 0) {
-    return NextResponse.json({ date: today, total: dueContacts.length, results });
+  const summary = {
+    date: today,
+    due: dueContacts.length,
+    alreadyDispatchedToday: dueContacts.length - pending.length,
+    pending: pending.length,
+    heldByEmployeeCap: pending.length - eligible.length,
+  };
+
+  if (eligible.length === 0) {
+    return NextResponse.json({ ...summary, targetThisRun: 0, dispatched: 0, results: [] });
   }
 
   // Quantos mandar nesta invocacao (ver NOTA SOBRE ESPACAMENTO).
@@ -122,33 +132,23 @@ export async function GET(request: NextRequest) {
     : Math.max(1, Math.floor((WINDOW_END_SECONDS - nowSeconds) / SCHEDULER_TICK_SECONDS));
   const targetThisRun = Math.min(
     MAX_DISPATCHES_PER_RUN,
-    Math.max(1, Math.ceil(pending.length / ticksRemaining))
+    Math.max(1, Math.ceil(eligible.length / ticksRemaining))
   );
 
   const functionStart = Date.now();
   const functionBudgetMs = (maxDuration - FUNCTION_SAFETY_MARGIN_SECONDS) * 1000;
 
+  const results: { contactId: string; status: DispatchStatus }[] = [];
   let dispatchCount = 0;
 
-  for (const contact of pending) {
-    if (dispatchCount >= targetThisRun) {
-      results.push({ contactId: contact.id, status: "deferred" });
-      continue;
-    }
-
-    if ((countByEmployee.get(contact.owner_id) ?? 0) >= MAX_DISPATCHES_PER_EMPLOYEE_PER_DAY) {
-      results.push({ contactId: contact.id, status: "employee-daily-cap" });
-      continue;
-    }
+  for (const contact of eligible) {
+    if (dispatchCount >= targetThisRun) break;
 
     const elapsedMs = Date.now() - functionStart;
     const gapMs = dispatchCount > 0 ? GAP_SECONDS * 1000 : 0;
     // Sem tempo pra mais um envio COM a espera que vem antes dele: para aqui e
     // deixa o resto pro proximo tick, em vez de ser morto no meio do caminho.
-    if (elapsedMs + gapMs > functionBudgetMs) {
-      results.push({ contactId: contact.id, status: "deferred" });
-      continue;
-    }
+    if (elapsedMs + gapMs > functionBudgetMs) break;
 
     if (gapMs > 0) {
       const jitter = 0.7 + Math.random() * 0.6; // 70%-130%, pra nao sair num ritmo robotico
@@ -173,8 +173,6 @@ export async function GET(request: NextRequest) {
         results.push({ contactId: contact.id, status: "claimed-by-other" });
         continue;
       }
-
-      countByEmployee.set(contact.owner_id, (countByEmployee.get(contact.owner_id) ?? 0) + 1);
 
       if (!owner?.whatsapp_number) {
         await markDispatchFailed(claim.dispatchId);
@@ -211,12 +209,14 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
-    date: today,
-    total: dueContacts.length,
-    pending: pending.length,
-    targetThisRun,
+    ...summary,
     ticksRemaining,
+    targetThisRun,
     dispatched: dispatchCount,
+    // So os contatos de fato processados nesta invocacao. O que sobrou nao
+    // vira entrada aqui: com algumas centenas de pendentes a resposta ficava
+    // ilegivel, e e' por ela que se acompanha o robo (os counts acima dizem
+    // quanto ficou pra tras e por que).
     results,
   });
 }
