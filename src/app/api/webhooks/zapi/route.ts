@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SECONDS_PER_CONTACT_MIN } from "@/lib/data/reminders";
+import { todayInSaoPaulo } from "@/lib/date";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +17,11 @@ function isAuthorized(request: NextRequest): boolean {
   return timingSafeEqual(a, b);
 }
 
-// Ex: "K7B2Q9" — ver CODE_ALPHABET em src/lib/data/reminders.ts (sem 0/O/1/I/L)
-const CODE_PATTERN = /[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}/i;
+// Ex: "K7B2Q9" — ver CODE_ALPHABET em src/lib/data/reminders.ts (sem 0/O/1/I/L).
+// O  nas pontas e' necessario: sem ele, qualquer sequencia de 6 caracteres
+// do alfabeto DENTRO de uma palavra casava ("FECHADO" -> "FECHAD"), e um
+// funcionario respondendo em texto livre podia confirmar um disparo a esmo.
+const CODE_PATTERN = /[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}/i;
 
 interface IncomingMessage {
   senderPhone: string | null;
@@ -68,6 +72,25 @@ function phoneVariants(phone: string): string[] {
   return [...variants].map((d) => `+${d}`);
 }
 
+type Admin = ReturnType<typeof createAdminClient>;
+
+// maybeSingle() aqui virava erro 500 quando duas variantes do mesmo numero
+// casavam dois perfis distintos. Com limit(1) o webhook segue funcionando —
+// cadastro duplicado e' problema de dado, nao motivo pra derrubar a rota.
+async function findEmployeeIdByPhone(admin: Admin, phone: string): Promise<string | null> {
+  const { data, error } = await admin
+    .from("profiles")
+    .select("id")
+    .in("whatsapp_number", phoneVariants(phone))
+    .limit(1);
+
+  if (error) {
+    console.error("Erro ao buscar funcionario pelo telefone:", error);
+    throw error;
+  }
+  return data?.[0]?.id ?? null;
+}
+
 export async function POST(request: NextRequest) {
   if (!isAuthorized(request)) {
     return new NextResponse("Unauthorized", { status: 401 });
@@ -101,25 +124,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, matched: false });
     }
 
-    const { data: employee, error: employeeError } = await admin
-      .from("profiles")
-      .select("id")
-      .in("whatsapp_number", phoneVariants(incoming.senderPhone))
-      .maybeSingle();
-
-    if (employeeError) {
-      console.error("Erro ao buscar funcionario pelo telefone:", employeeError);
+    let employeeId: string | null;
+    try {
+      employeeId = await findEmployeeIdByPhone(admin, incoming.senderPhone);
+    } catch {
       return new NextResponse("Internal error", { status: 500 });
     }
-    if (!employee) {
+    if (!employeeId) {
       return NextResponse.json({ ok: true, matched: false });
     }
 
+    // scheduled_for = hoje e' essencial. Sem esse filtro, o "TUDO" confirmava
+    // TODOS os disparos 'sent' do funcionario desde sempre e marcava os
+    // contatos como done — pendencia de dias anteriores que nunca foi
+    // realmente trabalhada era apagada silenciosamente.
     const { data: pending, error: pendingError } = await admin
       .from("reminder_dispatches")
       .select("id, contact_id, sent_at")
-      .eq("employee_id", employee.id)
-      .eq("status", "sent");
+      .eq("employee_id", employeeId)
+      .eq("status", "sent")
+      .eq("scheduled_for", todayInSaoPaulo());
 
     if (pendingError) {
       console.error("Erro ao buscar disparos pendentes:", pendingError);
@@ -163,13 +187,18 @@ export async function POST(request: NextRequest) {
 
   // confirmacao individual por codigo
   const codeMatch = trimmedText.match(CODE_PATTERN);
-  let dispatch: { id: string; contact_id: string; sent_at: string | null } | null = null;
+  let dispatch: {
+    id: string;
+    contact_id: string;
+    sent_at: string | null;
+    employee_id: string;
+  } | null = null;
 
   if (codeMatch) {
     const code = codeMatch[0].toUpperCase();
     const { data, error } = await admin
       .from("reminder_dispatches")
-      .select("id, contact_id, sent_at")
+      .select("id, contact_id, sent_at, employee_id")
       .eq("confirmation_code", code)
       .eq("status", "sent")
       .maybeSingle();
@@ -185,7 +214,7 @@ export async function POST(request: NextRequest) {
   if (!dispatch && incoming.referenceMessageId) {
     const { data, error } = await admin
       .from("reminder_dispatches")
-      .select("id, contact_id, sent_at")
+      .select("id, contact_id, sent_at, employee_id")
       .eq("zapi_message_id", incoming.referenceMessageId)
       .eq("status", "sent")
       .maybeSingle();
@@ -200,6 +229,26 @@ export async function POST(request: NextRequest) {
   if (!dispatch) {
     // aceita o webhook (200) mas nao ha o que correlacionar — evita retries infinitos da Z-API
     return NextResponse.json({ ok: true, matched: false });
+  }
+
+  // O codigo chegou pelo WhatsApp de quem recebeu o lembrete? Se o remetente
+  // resolve pra um funcionario DIFERENTE do dono do disparo, recusa — um
+  // codigo repassado nao deve confirmar o contato de outra pessoa. Quando o
+  // remetente nao resolve pra nenhum perfil, segue em frente (o numero pode
+  // estar cadastrado num formato que phoneVariants nao cobre, e barrar aqui
+  // quebraria a confirmacao de todo mundo nesse caso).
+  if (incoming.senderPhone) {
+    let senderEmployeeId: string | null;
+    try {
+      senderEmployeeId = await findEmployeeIdByPhone(admin, incoming.senderPhone);
+    } catch {
+      return new NextResponse("Internal error", { status: 500 });
+    }
+
+    if (senderEmployeeId && senderEmployeeId !== dispatch.employee_id) {
+      console.warn("Codigo de confirmacao enviado por funcionario que nao e' o dono do disparo.");
+      return NextResponse.json({ ok: true, matched: false });
+    }
   }
 
   const elapsedSeconds = (Date.now() - new Date(dispatch.sent_at ?? Date.now()).getTime()) / 1000;

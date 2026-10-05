@@ -1,17 +1,33 @@
 name: Dispatch WhatsApp reminders
 
+# O AGENDAMENTO NAO MORA MAIS AQUI.
+# Este workflow pedia "*/5 9-14 * * *" (72 execucoes por dia) e o GitHub
+# Actions entregava 1 ou 2, nas horas 13-18 UTC — quase sempre FORA da janela
+# de 09:00-14:00 UTC que a rota exige, entao a rota respondia "fora da janela"
+# e nao mandava nada. Era essa a razao de so existirem 59 disparos em seis
+# semanas. O cron do GitHub Actions e' best-effort e e' atrasado/descartado
+# sob carga; nao serve pra isso.
+#
+# O agendamento agora e' o pg_cron do Supabase (migration 0010), que dispara
+# no horario. O cron da Vercel tambem nao serve: a conta e' Hobby, limitada a
+# um disparo por dia com precisao de ±59 min. Aqui fica so o acionamento
+# manual, que e' como se testa o envio.
 on:
-  schedule:
-    # a cada 5 minutos, 09:00-14:55 UTC = 06:00-11:55 horario de Brasilia.
-    # a propria rota decide nao fazer nada fora de 06:00-11:00 — essa faixa
-    # so garante cobertura de sobra nas bordas.
-    - cron: "*/5 9-14 * * *"
   workflow_dispatch:
     inputs:
       force:
         description: "Ignorar a janela de horario e forcar o disparo agora (so pra teste manual)"
         type: boolean
         default: false
+
+# cancel-in-progress: false porque matar uma execucao no meio deixaria reservas
+# de disparo penduradas em 'scheduled'. Mesmo que um acionamento manual caia
+# junto com um tick do cron da Vercel, nao sai mensagem duplicada: o disparo
+# reserva a linha em reminder_dispatches antes de enviar, e quem perde a
+# corrida no unique index desiste sem enviar (ver claimDispatch).
+concurrency:
+  group: dispatch-reminders
+  cancel-in-progress: false
 
 jobs:
   dispatch:
