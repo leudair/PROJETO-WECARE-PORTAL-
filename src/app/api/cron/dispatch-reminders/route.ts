@@ -3,35 +3,53 @@ import { timingSafeEqual } from "node:crypto";
 import { sendWhatsAppText } from "@/lib/zapi/client";
 import {
   buildReminderText,
-  generateConfirmationCode,
+  claimDispatch,
+  getTodayDispatchState,
   getDueContacts,
   getTemplateBody,
-  hasDispatchToday,
-  recordDispatch,
+  markDispatchFailed,
+  markDispatchSent,
   todayInSaoPaulo,
 } from "@/lib/data/reminders";
 
 export const dynamic = "force-dynamic";
-// Teto de execucao da Vercel pra essa rota. O loop abaixo para de processar
-// novos envios perto desse limite e deixa o resto pra proxima invocacao do
-// cron (que roda de poucos em poucos minutos — ver vercel.json), em vez de
-// arriscar ser encerrado a forca no meio de um envio.
+
+// Teto de execucao da Vercel pra essa rota. O lote de cada invocacao e'
+// dimensionado pra caber folgado aqui dentro — nenhuma espera longa acontece
+// dentro da funcao (ver NOTA SOBRE ESPACAMENTO abaixo).
 export const maxDuration = 60;
 const FUNCTION_SAFETY_MARGIN_SECONDS = 10;
 
 // So dispara entre esses horarios (horario de Brasilia) — antes que os
 // funcionarios comecem o expediente (9h30), sem ser tao de madrugada que
-// pareca atividade automatizada. Fora dessa janela, a rota nao faz nada,
-// mesmo se o cron disparar (ver vercel.json cobre um pouco mais que a
-// janela real de proposito, a checagem aqui e que garante a hora exata).
+// pareca atividade automatizada.
 const WINDOW_START_SECONDS = 6 * 3600; // 06:00
 const WINDOW_END_SECONDS = 11 * 3600; // 11:00
 
-// Nunca espaca menos que isso, mesmo com volume alto — abaixo disso vira
-// rajada de qualquer forma. O espacamento "ideal" real e calculado em tempo
-// de execucao (tempo restante na janela ÷ contatos restantes), entao ele se
-// ajusta sozinho conforme o volume diario mudar, sem precisar tocar aqui.
-const MIN_GAP_SECONDS = 3;
+// NOTA SOBRE ESPACAMENTO
+// O espacamento ao longo da manha vem da FREQUENCIA DO AGENDADOR, nao de
+// dormir dentro da funcao. A versao anterior calculava "janela restante ÷
+// pendentes" e dormia esse tanto (podia dar 30 min) — a Vercel matava a
+// funcao no meio do sleep e so 1 mensagem saia por invocacao.
+//
+// Agora cada invocacao manda um lote pequeno, e o tamanho do lote se ajusta
+// sozinho ao volume: pendentes ÷ ticks que ainda cabem na janela. Com pouca
+// gente vira 1 por tick (bem espacado); com muita gente sobe ate
+// MAX_DISPATCHES_PER_RUN. Se o agendador perder um tick (o cron do GitHub
+// Actions atrasa com frequencia), o tick seguinte ve menos ticks restantes e
+// manda um lote maior pra compensar.
+const SCHEDULER_TICK_SECONDS = 5 * 60; // ver .github/workflows/dispatch-reminders.yml
+const MAX_DISPATCHES_PER_RUN = 8;
+const GAP_SECONDS = 4; // dentro do lote, so pra nao virar rajada
+
+// TETO POR FUNCIONARIO, POR DIA
+// Cada lembrete e' uma mensagem de WhatsApp separada na mao do funcionario.
+// Sem teto, um acumulo de pendencia viraria dezenas de mensagens na mesma
+// manha pra mesma pessoa — inutil pra quem recebe e um bom jeito de ter a
+// instancia da Z-API bloqueada por comportamento de spam. O que passar do
+// teto fica pendente e entra nos dias seguintes (o mais atrasado primeiro,
+// ver a ordenacao em getDueContacts).
+const MAX_DISPATCHES_PER_EMPLOYEE_PER_DAY = 20;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -63,6 +81,14 @@ function isAuthorized(request: NextRequest): boolean {
   return timingSafeEqual(a, b);
 }
 
+type DispatchStatus =
+  | "sent"
+  | "failed"
+  | "skipped"
+  | "claimed-by-other"
+  | "deferred"
+  | "employee-daily-cap";
+
 export async function GET(request: NextRequest) {
   if (!isAuthorized(request)) {
     return new NextResponse("Unauthorized", { status: 401 });
@@ -78,26 +104,26 @@ export async function GET(request: NextRequest) {
   const today = todayInSaoPaulo();
   const dueContacts = await getDueContacts(today);
 
-  const results: { contactId: string; status: "sent" | "failed" | "skipped" }[] = [];
+  // Uma query so pra todo o lote, em vez de uma por contato.
+  const { contactIds: alreadyDispatched, countByEmployee } = await getTodayDispatchState(today);
+  const pending = dueContacts.filter((contact) => !alreadyDispatched.has(contact.id));
 
-  // separa quem ja foi disparado hoje (nao conta pro calculo de espacamento)
-  const pending: typeof dueContacts = [];
-  for (const contact of dueContacts) {
-    if (await hasDispatchToday(contact.id, today)) {
-      results.push({ contactId: contact.id, status: "skipped" });
-    } else {
-      pending.push(contact);
-    }
-  }
+  const results: { contactId: string; status: DispatchStatus }[] = dueContacts
+    .filter((contact) => alreadyDispatched.has(contact.id))
+    .map((contact) => ({ contactId: contact.id, status: "skipped" as const }));
 
   if (pending.length === 0) {
     return NextResponse.json({ date: today, total: dueContacts.length, results });
   }
 
-  const secondsRemainingInWindow = force
-    ? pending.length * MIN_GAP_SECONDS
-    : Math.max(1, WINDOW_END_SECONDS - nowSeconds);
-  const idealGapSeconds = Math.max(MIN_GAP_SECONDS, secondsRemainingInWindow / pending.length);
+  // Quantos mandar nesta invocacao (ver NOTA SOBRE ESPACAMENTO).
+  const ticksRemaining = force
+    ? 1
+    : Math.max(1, Math.floor((WINDOW_END_SECONDS - nowSeconds) / SCHEDULER_TICK_SECONDS));
+  const targetThisRun = Math.min(
+    MAX_DISPATCHES_PER_RUN,
+    Math.max(1, Math.ceil(pending.length / ticksRemaining))
+  );
 
   const functionStart = Date.now();
   const functionBudgetMs = (maxDuration - FUNCTION_SAFETY_MARGIN_SECONDS) * 1000;
@@ -105,53 +131,82 @@ export async function GET(request: NextRequest) {
   let dispatchCount = 0;
 
   for (const contact of pending) {
-    if (Date.now() - functionStart > functionBudgetMs) {
-      // sem tempo pra mais nesta execucao — o resto fica pra proxima rodada do cron
-      break;
-    }
-
-    const owner = (contact as unknown as { profiles: { whatsapp_number: string } | null }).profiles;
-    if (!owner?.whatsapp_number) {
-      results.push({ contactId: contact.id, status: "failed" });
+    if (dispatchCount >= targetThisRun) {
+      results.push({ contactId: contact.id, status: "deferred" });
       continue;
     }
 
-    if (dispatchCount > 0) {
-      const jitter = 0.7 + Math.random() * 0.6; // 70%-130% do espacamento ideal
-      await sleep(idealGapSeconds * 1000 * jitter);
+    if ((countByEmployee.get(contact.owner_id) ?? 0) >= MAX_DISPATCHES_PER_EMPLOYEE_PER_DAY) {
+      results.push({ contactId: contact.id, status: "employee-daily-cap" });
+      continue;
     }
-    dispatchCount += 1;
 
-    const templateBody =
-      contact.contact_type === "lead" && contact.attempt_stage
-        ? await getTemplateBody(contact.attempt_stage)
-        : null;
+    const elapsedMs = Date.now() - functionStart;
+    const gapMs = dispatchCount > 0 ? GAP_SECONDS * 1000 : 0;
+    // Sem tempo pra mais um envio COM a espera que vem antes dele: para aqui e
+    // deixa o resto pro proximo tick, em vez de ser morto no meio do caminho.
+    if (elapsedMs + gapMs > functionBudgetMs) {
+      results.push({ contactId: contact.id, status: "deferred" });
+      continue;
+    }
 
-    const confirmationCode = generateConfirmationCode();
-    const text = buildReminderText(contact, templateBody, confirmationCode);
+    if (gapMs > 0) {
+      const jitter = 0.7 + Math.random() * 0.6; // 70%-130%, pra nao sair num ritmo robotico
+      await sleep(gapMs * jitter);
+    }
 
+    // Tudo daqui pra baixo e' por contato e nunca pode derrubar a rodada
+    // inteira — um contato com problema nao deve impedir os outros de sair.
     try {
-      const { zapiMessageId } = await sendWhatsAppText(owner.whatsapp_number, text);
-      await recordDispatch({
+      const owner = (contact as unknown as { profiles: { whatsapp_number: string } | null })
+        .profiles;
+
+      // Reserva ANTES de enviar: e' isso que impede duas execucoes
+      // simultaneas de mandarem o mesmo lembrete duas vezes.
+      const claim = await claimDispatch({
         contactId: contact.id,
         employeeId: contact.owner_id,
         scheduledFor: today,
-        zapiMessageId,
-        status: "sent",
-        confirmationCode,
       });
-      results.push({ contactId: contact.id, status: "sent" });
+
+      if (!claim) {
+        results.push({ contactId: contact.id, status: "claimed-by-other" });
+        continue;
+      }
+
+      countByEmployee.set(contact.owner_id, (countByEmployee.get(contact.owner_id) ?? 0) + 1);
+
+      if (!owner?.whatsapp_number) {
+        await markDispatchFailed(claim.dispatchId);
+        results.push({ contactId: contact.id, status: "failed" });
+        console.error(`Contato ${contact.id}: funcionario sem whatsapp_number cadastrado.`);
+        continue;
+      }
+
+      dispatchCount += 1;
+
+      const templateBody =
+        contact.contact_type === "lead" && contact.attempt_stage
+          ? await getTemplateBody(contact.attempt_stage)
+          : null;
+
+      const text = buildReminderText(contact, templateBody, claim.confirmationCode);
+
+      try {
+        const { zapiMessageId } = await sendWhatsAppText(owner.whatsapp_number, text);
+        await markDispatchSent(claim.dispatchId, zapiMessageId);
+        results.push({ contactId: contact.id, status: "sent" });
+      } catch (err) {
+        // A reserva ja existe, entao aqui e' update — nao tem como colidir com
+        // o unique index (era esse o bug: o catch antigo tentava inserir de
+        // novo, violava o indice e derrubava o resto da fila).
+        await markDispatchFailed(claim.dispatchId);
+        results.push({ contactId: contact.id, status: "failed" });
+        console.error(`Falha ao disparar lembrete ${contact.id}:`, err);
+      }
     } catch (err) {
-      await recordDispatch({
-        contactId: contact.id,
-        employeeId: contact.owner_id,
-        scheduledFor: today,
-        zapiMessageId: null,
-        status: "failed",
-        confirmationCode: null,
-      });
       results.push({ contactId: contact.id, status: "failed" });
-      console.error(`Falha ao disparar lembrete ${contact.id}:`, err);
+      console.error(`Erro inesperado no contato ${contact.id}:`, err);
     }
   }
 
@@ -159,7 +214,9 @@ export async function GET(request: NextRequest) {
     date: today,
     total: dueContacts.length,
     pending: pending.length,
-    idealGapSeconds: Math.round(idealGapSeconds),
+    targetThisRun,
+    ticksRemaining,
+    dispatched: dispatchCount,
     results,
   });
 }

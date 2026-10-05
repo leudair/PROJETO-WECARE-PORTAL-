@@ -13,6 +13,19 @@ on:
         type: boolean
         default: false
 
+# Este workflow e' o UNICO agendador do disparo. Antes havia tambem um cron no
+# vercel.json apontando pra mesma rota: as 09:00 UTC os dois disparavam juntos,
+# as duas execucoes liam a mesma lista de pendentes e o mesmo lembrete saia
+# duas vezes. O vercel.json foi removido junto com esta mudanca.
+#
+# concurrency evita o mesmo efeito entre ticks deste workflow: o cron do GitHub
+# Actions atrasa com frequencia e as vezes dispara execucoes em sequencia
+# imediata. cancel-in-progress: false porque matar uma execucao no meio
+# deixaria reservas de disparo penduradas em 'scheduled'.
+concurrency:
+  group: dispatch-reminders
+  cancel-in-progress: false
+
 jobs:
   dispatch:
     runs-on: ubuntu-latest

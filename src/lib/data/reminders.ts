@@ -31,23 +31,44 @@ export async function getDueContacts(dateStr: string) {
     .from("contacts")
     .select("*, profiles!contacts_owner_id_fkey(whatsapp_number, full_name)")
     .eq("status", "pending")
-    .lte("next_contact_date", dateStr);
+    .lte("next_contact_date", dateStr)
+    // Ordem deterministica, mais atrasado primeiro. Sem isso o Postgres
+    // devolve em ordem arbitraria e, como cada execucao manda um lote, um
+    // contato atrasado pode ficar sendo preterido por dias seguidos.
+    .order("next_contact_date", { ascending: true })
+    .order("created_at", { ascending: true });
 
   if (error) throw error;
   return data;
 }
 
-export async function hasDispatchToday(contactId: string, dateStr: string) {
+export interface TodayDispatchState {
+  /** Contatos que ja tem disparo registrado hoje, em qualquer status — inclui
+   *  a reserva feita por uma execucao concorrente que ainda esta enviando. */
+  contactIds: Set<string>;
+  /** Quantos lembretes cada funcionario ja recebeu hoje. */
+  countByEmployee: Map<string, number>;
+}
+
+// Uma query por rodada em vez de uma por contato.
+export async function getTodayDispatchState(dateStr: string): Promise<TodayDispatchState> {
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("reminder_dispatches")
-    .select("id")
-    .eq("contact_id", contactId)
-    .eq("scheduled_for", dateStr)
-    .maybeSingle();
+    .select("contact_id, employee_id")
+    .eq("scheduled_for", dateStr);
 
   if (error) throw error;
-  return Boolean(data);
+
+  const contactIds = new Set<string>();
+  const countByEmployee = new Map<string, number>();
+
+  for (const row of data ?? []) {
+    contactIds.add(row.contact_id);
+    countByEmployee.set(row.employee_id, (countByEmployee.get(row.employee_id) ?? 0) + 1);
+  }
+
+  return { contactIds, countByEmployee };
 }
 
 export async function getTemplateBody(stage: number): Promise<string> {
@@ -62,24 +83,81 @@ export async function getTemplateBody(stage: number): Promise<string> {
   return data?.body ?? "";
 }
 
-export async function recordDispatch(input: {
+// Violacao de unique constraint no Postgres.
+const UNIQUE_VIOLATION = "23505";
+
+export interface DispatchClaim {
+  dispatchId: string;
+  confirmationCode: string;
+}
+
+// Reserva o disparo ANTES de mandar a mensagem. O unique index
+// (contact_id, scheduled_for) e' o que garante que duas execucoes
+// simultaneas do cron nao mandem o mesmo lembrete duas vezes: quem perder a
+// corrida recebe 23505 aqui e devolve null, sem ter enviado nada. Enviar
+// primeiro e gravar depois (como era antes) deixava o WhatsApp sair duas
+// vezes, porque o indice so barrava a segunda LINHA, nao a segunda mensagem.
+//
+// Devolve null quando o contato ja foi reservado por outra execucao.
+export async function claimDispatch(input: {
   contactId: string;
   employeeId: string;
   scheduledFor: string;
-  zapiMessageId: string | null;
-  status: "sent" | "failed";
-  confirmationCode: string | null;
-}) {
+}): Promise<DispatchClaim | null> {
   const admin = createAdminClient();
-  const { error } = await admin.from("reminder_dispatches").insert({
-    contact_id: input.contactId,
-    employee_id: input.employeeId,
-    scheduled_for: input.scheduledFor,
-    sent_at: input.status === "sent" ? new Date().toISOString() : null,
-    zapi_message_id: input.zapiMessageId,
-    status: input.status,
-    confirmation_code: input.confirmationCode,
-  });
+
+  // O codigo de confirmacao tambem tem unique index. Colisao e' improvavel
+  // (31^6), mas se acontecer vale tentar outro em vez de derrubar o disparo.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const confirmationCode = generateConfirmationCode();
+
+    const { data, error } = await admin
+      .from("reminder_dispatches")
+      .insert({
+        contact_id: input.contactId,
+        employee_id: input.employeeId,
+        scheduled_for: input.scheduledFor,
+        status: "scheduled",
+        confirmation_code: confirmationCode,
+      })
+      .select("id")
+      .single();
+
+    if (!error) {
+      return { dispatchId: data.id, confirmationCode };
+    }
+
+    if (error.code !== UNIQUE_VIOLATION) throw error;
+
+    // Foi o indice de (contact_id, scheduled_for)? Entao outra execucao pegou
+    // esse contato e nao ha o que fazer. Se foi o do codigo, tenta de novo.
+    if (!error.message.includes("confirmation_code")) return null;
+  }
+
+  throw new Error(
+    `Nao foi possivel gerar um codigo de confirmacao livre para o contato ${input.contactId}.`
+  );
+}
+
+export async function markDispatchSent(dispatchId: string, zapiMessageId: string | null) {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("reminder_dispatches")
+    .update({ status: "sent", sent_at: new Date().toISOString(), zapi_message_id: zapiMessageId })
+    .eq("id", dispatchId);
+
+  if (error) throw error;
+}
+
+// O codigo de confirmacao e' zerado junto: a mensagem nunca chegou, entao
+// ninguem pode confirmar por ele, e deixa-lo ocupando o unique index so
+// aumentaria a chance de colisao depois.
+export async function markDispatchFailed(dispatchId: string) {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("reminder_dispatches")
+    .update({ status: "failed", confirmation_code: null })
+    .eq("id", dispatchId);
 
   if (error) throw error;
 }
