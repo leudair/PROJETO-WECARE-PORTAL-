@@ -1,15 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { formatCurrency } from "./format";
 
 export interface CustoRankingEntry {
   employeeName: string;
   totalCustoOperacional: number;
   custoOperacionalPct: number;
-}
-
-function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 // Ranking do custo operacional do mes, somado por funcionaria (nao por

@@ -91,6 +91,35 @@ export async function listFinancialEntries() {
   }));
 }
 
+export async function getEmployeeFinancialHistory(employeeId: string) {
+  await requireFinance();
+  const supabase = await createClient();
+
+  const [{ data: entries, error: entriesError }, { data: profile, error: profileError }] = await Promise.all([
+    supabase
+      .from("financial_entries")
+      .select("*")
+      .eq("employee_id", employeeId)
+      .order("week_start_date", { ascending: false }),
+    supabase.from("profiles").select("id, full_name").eq("id", employeeId).single(),
+  ]);
+
+  if (entriesError) throw entriesError;
+  if (profileError) throw profileError;
+
+  return {
+    employeeName: profile.full_name,
+    entries: entries.map((entry) => ({
+      entry,
+      breakdown: computeFinancials({
+        faturamento: entry.faturamento,
+        custoOperacional: entry.custo_operacional,
+        custoAnuncios: entry.custo_anuncios,
+      }),
+    })),
+  };
+}
+
 export const FinancialEntrySchema = z.object({
   employeeId: z.uuid(),
   weekStartDate: z.string().date(),
