@@ -1,6 +1,14 @@
 import Link from "next/link";
-import { CUSTO_OPERACIONAL_ALERT_PCT, listEmployeesForFinance, listFinancialEntries } from "@/lib/data/finance";
-import { EntryForm } from "./entry-form";
+import {
+  CUSTO_OPERACIONAL_ALERT_PCT,
+  TAX_RATE,
+  COMMISSION_RATE,
+  VARIABLE_RATE,
+  listEmployeesForFinance,
+  listFinancialEntries,
+} from "@/lib/data/finance";
+import { PageHeader } from "@/components/page-header";
+import { NewEntryModal } from "./new-entry-modal";
 import { CustoRankingButton } from "./custo-ranking-button";
 import { formatCurrency, formatWeekRange, MONTH_NAMES } from "./format";
 
@@ -49,33 +57,29 @@ export default async function FinanceiroPage() {
     .sort((a, b) => a.employeeName.localeCompare(b.employeeName, "pt-BR"));
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-lg font-semibold text-foreground">Financeiro</h1>
-          <p className="text-sm text-muted">
-            Informe faturamento, custo operacional e custo de anúncios da semana — imposto, comissão,
-            variável, saldo e lucro líquido são calculados automaticamente.
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <CustoRankingButton entries={custoRanking} alertThreshold={CUSTO_OPERACIONAL_ALERT_PCT} monthLabel={monthLabel} />
-          <Link
-            href="/financeiro/mensal"
-            className="rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/30 transition hover:bg-primary/90 hover:shadow-lg"
-          >
-            📅 Faturamento mensal
-          </Link>
-        </div>
-      </div>
-
-      <EntryForm employees={employees} />
+    <div className="space-y-10">
+      <PageHeader
+        title="Financeiro"
+        description="Faturamento, custo operacional e custo de anúncios da semana — imposto, comissão, variável, saldo e lucro líquido calculados automaticamente."
+        action={
+          <>
+            <CustoRankingButton entries={custoRanking} alertThreshold={CUSTO_OPERACIONAL_ALERT_PCT} monthLabel={monthLabel} />
+            <Link
+              href="/financeiro/mensal"
+              className="rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-surface"
+            >
+              📅 Faturamento mensal
+            </Link>
+            <NewEntryModal employees={employees} rates={{ tax: TAX_RATE, commission: COMMISSION_RATE, variable: VARIABLE_RATE }} />
+          </>
+        }
+      />
 
       <div>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Lançamentos por funcionária</h2>
-        <div className="space-y-2">
+        <h2 className="mb-4 text-base font-bold text-foreground">Lançamentos por funcionária</h2>
+        <div className="space-y-2.5">
           {employeeList.length === 0 && (
-            <div className="rounded-xl border border-border bg-surface p-6 text-center text-sm text-muted">
+            <div className="rounded-2xl border border-border bg-surface p-8 text-center text-sm text-muted">
               Nenhum lançamento ainda.
             </div>
           )}
@@ -83,16 +87,16 @@ export default async function FinanceiroPage() {
             <Link
               key={employeeId}
               href={`/financeiro/funcionario/${employeeId}`}
-              className="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface p-4 hover:bg-background"
+              className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-surface p-5 shadow-sm transition hover:border-primary/40 hover:bg-surface-2"
             >
               <div className="min-w-0">
-                <h3 className="font-semibold text-red-700 dark:text-red-400">{employeeName}</h3>
-                <p className="text-xs text-muted">
+                <h3 className="font-bold text-foreground">{employeeName}</h3>
+                <p className="mt-0.5 text-xs text-muted">
                   Última semana: {formatWeekRange(lastEntry.entry.week_start_date)} ·{" "}
-                  {formatCurrency(lastEntry.breakdown.faturamento)}
+                  <span className="font-semibold text-green-400">{formatCurrency(lastEntry.breakdown.faturamento)}</span>
                 </p>
               </div>
-              <span className="shrink-0 text-muted">→</span>
+              <span className="shrink-0 text-lg text-muted">→</span>
             </Link>
           ))}
         </div>

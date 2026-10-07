@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useActionState } from "react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { PasswordInput } from "@/components/password-input";
 import { updatePassword } from "./actions";
 
@@ -11,9 +10,6 @@ export default function ResetPasswordPage() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="absolute right-4 top-4">
-        <ThemeToggle />
-      </div>
       <form
         action={formAction}
         className="w-full max-w-sm space-y-4 rounded-xl border border-border bg-surface p-8 shadow-sm"

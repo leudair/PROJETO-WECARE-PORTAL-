@@ -1,61 +1,26 @@
-import Image from "next/image";
-import Link from "next/link";
 import { requireProfile } from "@/lib/data/auth";
 import { logout } from "@/app/logout-action";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Sidebar, type SidebarNavItem } from "@/components/sidebar";
+import { OverviewIcon, MessagesIcon, RadarIcon } from "@/components/icons";
 import { NoticeBanner } from "./notice-banner";
 
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireProfile();
 
+  const navItems: SidebarNavItem[] = [
+    { href: "/dashboard", label: "Meus contatos", icon: <OverviewIcon className="h-5 w-5" /> },
+    { href: "/dashboard/templates", label: "Mensagens", icon: <MessagesIcon className="h-5 w-5" /> },
+    { href: "https://wecare-radar.vercel.app", label: "Radar", icon: <RadarIcon className="h-5 w-5" />, external: true },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-3xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <nav className="flex items-center gap-4 overflow-x-auto text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Link href="/dashboard" className="flex shrink-0 items-center gap-2 whitespace-nowrap font-semibold text-foreground">
-              <Image
-                src="/logo-animada.webp"
-                alt="WeCare"
-                width={200}
-                height={200}
-                className="h-8 w-auto"
-                priority
-                unoptimized
-              />
-              Portal
-            </Link>
-            <Link href="/dashboard" className="shrink-0 whitespace-nowrap text-muted hover:text-foreground">
-              Meus contatos
-            </Link>
-            <Link href="/dashboard/templates" className="shrink-0 whitespace-nowrap text-muted hover:text-foreground">
-              Mensagens
-            </Link>
-            <a
-              href="https://wecare-radar.vercel.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 whitespace-nowrap rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
-            >
-              📡 Radar
-            </a>
-          </nav>
-          <div className="flex items-center gap-3 overflow-x-auto text-sm text-muted [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <span className="shrink-0 whitespace-nowrap">{profile.full_name}</span>
-            <form action={logout} className="shrink-0">
-              <button type="submit" className="whitespace-nowrap text-muted hover:text-foreground">
-                Sair
-              </button>
-            </form>
-            <span className="shrink-0">
-              <ThemeToggle />
-            </span>
-          </div>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar navItems={navItems} userName={profile.full_name} roleLabel="Funcionária" logoutAction={logout} />
+      <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+        <div className="mx-auto max-w-5xl">
+          <NoticeBanner />
+          {children}
         </div>
-      </header>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <NoticeBanner />
-        {children}
       </main>
     </div>
   );
