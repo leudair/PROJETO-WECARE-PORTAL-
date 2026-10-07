@@ -209,6 +209,43 @@ export interface Database {
           },
         ];
       };
+      monthly_revenue_entries: {
+        Row: {
+          id: string;
+          employee_id: string;
+          month_start_date: string;
+          faturamento: number;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          employee_id: string;
+          month_start_date: string;
+          faturamento: number;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["monthly_revenue_entries"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "monthly_revenue_entries_employee_id_fkey";
+            columns: ["employee_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "monthly_revenue_entries_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
