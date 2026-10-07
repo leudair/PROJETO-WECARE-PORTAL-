@@ -79,8 +79,15 @@ export function Sidebar({
 
   const navContent = (
     <>
-      <div className="flex items-center gap-2 px-4 py-5">
-        <Image src="/wecare-logo.png" alt="WeCare" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" priority />
+      <div className="flex items-center gap-2.5 px-4 py-5">
+        <Image
+          src="/icon.png"
+          alt="WeCare"
+          width={36}
+          height={36}
+          className="h-9 w-9 shrink-0 rounded-xl object-contain drop-shadow-[0_4px_12px_rgba(196,18,48,0.45)]"
+          priority
+        />
         {!collapsed && <span className="truncate text-sm font-bold tracking-wide text-foreground">WeCare Portal</span>}
       </div>
 
@@ -95,7 +102,9 @@ export function Sidebar({
           );
           const className = [
             "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-            active ? "bg-surface-2 text-foreground" : "text-muted hover:bg-surface-2 hover:text-foreground",
+            active
+              ? "bg-gradient-to-r from-primary/15 to-transparent text-foreground"
+              : "text-muted hover:bg-surface-2 hover:text-foreground",
           ].join(" ");
 
           return item.external ? (
@@ -104,7 +113,9 @@ export function Sidebar({
             </a>
           ) : (
             <Link key={item.href} href={item.href} className={className} title={collapsed ? item.label : undefined}>
-              {active && <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary" />}
+              {active && (
+                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-primary shadow-[0_0_8px_rgba(232,69,94,0.8)]" />
+              )}
               {content}
             </Link>
           );
@@ -113,9 +124,7 @@ export function Sidebar({
 
       <div className="mt-auto space-y-2 border-t border-border p-3">
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-            {initials || "?"}
-          </span>
+          <span className="icon-orb h-8 w-8 shrink-0 text-xs font-bold text-white">{initials || "?"}</span>
           {!collapsed && (
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-foreground">{userName}</p>
@@ -140,9 +149,9 @@ export function Sidebar({
   return (
     <>
       {/* Barra mobile */}
-      <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-3 md:hidden">
+      <div className="flex items-center justify-between border-b border-white/[0.06] bg-gradient-to-b from-surface to-background px-4 py-3 md:hidden">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/wecare-logo.png" alt="WeCare" width={24} height={24} className="h-6 w-6 object-contain" />
+          <Image src="/icon.png" alt="WeCare" width={28} height={28} className="h-7 w-7 rounded-lg object-contain" />
           <span className="text-sm font-bold text-foreground">WeCare Portal</span>
         </Link>
         <button
@@ -159,7 +168,7 @@ export function Sidebar({
       {mobileOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
           <div className="fixed inset-0 bg-black/70" onClick={() => setMobileOpen(false)} />
-          <div className="relative flex w-72 max-w-[80vw] flex-col bg-surface">
+          <div className="relative flex w-72 max-w-[80vw] flex-col bg-gradient-to-b from-surface to-background">
             <button
               type="button"
               onClick={() => setMobileOpen(false)}
@@ -176,7 +185,7 @@ export function Sidebar({
       {/* Sidebar desktop */}
       <aside
         className={[
-          "relative hidden h-screen shrink-0 flex-col border-r border-border bg-surface transition-[width] duration-200 md:sticky md:top-0 md:flex",
+          "relative hidden h-screen shrink-0 flex-col border-r border-white/[0.06] bg-gradient-to-b from-surface to-background shadow-[inset_-1px_0_0_0_rgba(255,255,255,0.03)] transition-[width] duration-200 md:sticky md:top-0 md:flex",
           collapsed ? "w-[72px]" : "w-64",
         ].join(" ")}
       >

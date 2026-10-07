@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis, type TooltipContentProps } from "recharts";
+import { FinanceIcon } from "@/components/icons";
 
 export interface RevenueEntry {
   employeeName: string;
@@ -26,8 +27,6 @@ const MONTH_FULL = [
 ];
 
 const MONTHS_BACK = 5; // + mes atual = 6 colunas
-const RUBY = "#e8455e"; // ruby claro — >=3:1 de contraste no fundo grafite (validado)
-const GOLD = "#c9a227"; // ouro escovado — destaque do mes selecionado
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -46,7 +45,7 @@ function CustomTooltip({ active, payload }: TooltipContentProps) {
   if (!active || !payload?.length) return null;
   const point = payload[0].payload as { fullLabel: string; total: number };
   return (
-    <div className="rounded-lg border border-border bg-surface px-3 py-2 text-xs shadow-xl">
+    <div className="card-glass px-3 py-2 text-xs">
       <p className="text-muted">{point.fullLabel}</p>
       <p className="mt-0.5 text-sm font-bold text-foreground">{formatCurrency(point.total)}</p>
     </div>
@@ -102,17 +101,24 @@ export function MonthlyRevenueChart({ entries }: { entries: RevenueEntry[] }) {
   const hasAnyData = months.some((m) => m.total > 0);
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm sm:p-6">
+    <div className="card-glass p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-base font-bold text-foreground">Faturamento mensal da equipe</h2>
-          <p className="mt-0.5 text-xs text-muted">
-            Soma do faturamento mensal de todas as funcionárias. Clique num mês pra ver o detalhamento individual.
-          </p>
+        <div className="flex items-start gap-3">
+          <span className="icon-orb h-10 w-10 shrink-0 text-white">
+            <FinanceIcon className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="text-base font-bold text-foreground">Faturamento mensal da equipe</h2>
+            <p className="mt-0.5 text-xs text-muted">
+              Soma do faturamento mensal de todas as funcionárias. Clique num mês pra ver o detalhamento individual.
+            </p>
+          </div>
         </div>
         <div className="text-right">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted">{selectedMonth?.fullLabel}</p>
-          <p className="text-2xl font-bold tabular-nums text-foreground">{formatCurrency(selectedMonth?.total ?? 0)}</p>
+          <p className="text-2xl font-bold tabular-nums text-foreground [text-shadow:0_0_24px_rgba(232,69,94,0.35)]">
+            {formatCurrency(selectedMonth?.total ?? 0)}
+          </p>
           {delta !== null && (
             <p className={`text-xs font-semibold ${delta >= 0 ? "text-green-400" : "text-red-400"}`}>
               {delta >= 0 ? "▲" : "▼"} {Math.abs(delta).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% vs mês anterior
@@ -130,6 +136,16 @@ export function MonthlyRevenueChart({ entries }: { entries: RevenueEntry[] }) {
           <div className="mt-6 h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={months} margin={{ top: 24, right: 8, left: 8, bottom: 0 }} barCategoryGap="20%">
+                <defs>
+                  <linearGradient id="rubyBar" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f06478" />
+                    <stop offset="100%" stopColor="#b0102f" />
+                  </linearGradient>
+                  <linearGradient id="goldBar" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ecd48f" />
+                    <stop offset="100%" stopColor="#a9841d" />
+                  </linearGradient>
+                </defs>
                 <YAxis hide domain={[0, (max: number) => max * 1.25]} />
                 <XAxis
                   dataKey="label"
@@ -140,13 +156,13 @@ export function MonthlyRevenueChart({ entries }: { entries: RevenueEntry[] }) {
                 <Tooltip content={CustomTooltip} cursor={{ fill: "var(--surface-2)" }} />
                 <Bar
                   dataKey="total"
-                  radius={[4, 4, 0, 0]}
+                  radius={[6, 6, 0, 0]}
                   maxBarSize={40}
                   onClick={(data) => setSelectedKey((data as { key: string }).key)}
                   className="cursor-pointer"
                 >
                   {months.map((m) => (
-                    <Cell key={m.key} fill={m.key === selectedKey ? GOLD : RUBY} fillOpacity={m.key === selectedKey ? 1 : 0.85} />
+                    <Cell key={m.key} fill={m.key === selectedKey ? "url(#goldBar)" : "url(#rubyBar)"} />
                   ))}
                   <LabelList
                     dataKey="total"
@@ -176,7 +192,7 @@ export function MonthlyRevenueChart({ entries }: { entries: RevenueEntry[] }) {
                 {ranking.map(({ employeeName, total }, i) => (
                   <div key={employeeName} className="relative overflow-hidden rounded-lg bg-background">
                     <div
-                      className="absolute inset-y-0 left-0 bg-primary/15"
+                      className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary/25 to-primary/5"
                       style={{ width: `${(total / maxRankingTotal) * 100}%` }}
                     />
                     <div className="relative flex items-center justify-between gap-2 px-3.5 py-2.5">

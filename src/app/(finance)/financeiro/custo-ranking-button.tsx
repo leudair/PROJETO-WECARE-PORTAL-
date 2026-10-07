@@ -41,7 +41,7 @@ export function CustoRankingButton({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative flex h-[42px] w-[42px] items-center justify-center rounded-lg border border-border bg-surface-2 text-foreground hover:bg-surface"
+        className="icon-orb relative h-[42px] w-[42px] text-white"
         aria-label="Ranking de maiores gastos do mês"
       >
         <BellIcon className="h-5 w-5" />
@@ -52,7 +52,7 @@ export function CustoRankingButton({
         )}
       </button>
       {open && (
-        <div className="absolute right-0 z-20 mt-2 max-h-96 w-80 overflow-y-auto rounded-xl border border-border bg-surface p-3 shadow-xl">
+        <div className="card-glass absolute right-0 z-20 mt-2 max-h-96 w-80 overflow-y-auto p-3">
           <p className="mb-2 text-xs font-semibold text-foreground">
             Maiores gastos de {monthLabel} (custo operacional)
           </p>

@@ -27,8 +27,8 @@ export function Modal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 py-10 sm:items-center">
-      <div className="fixed inset-0 bg-black/70" onClick={onClose} />
-      <div className="relative w-full max-w-lg rounded-2xl border border-border bg-surface p-6 shadow-xl">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="card-glass relative w-full max-w-lg p-6">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-bold text-foreground">{title}</h2>
           <button
