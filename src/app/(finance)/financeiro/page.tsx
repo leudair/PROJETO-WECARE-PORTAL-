@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { CUSTO_OPERACIONAL_ALERT_PCT, listEmployeesForFinance, listFinancialEntries } from "@/lib/data/finance";
 import { EntryForm } from "./entry-form";
 import { EditEntryButton } from "./edit-entry-button";
@@ -63,12 +64,20 @@ export default async function FinanceiroPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">Financeiro</h1>
-        <p className="text-sm text-muted">
-          Informe faturamento, custo operacional e custo de anúncios da semana — imposto, comissão,
-          variável, saldo e lucro líquido são calculados automaticamente.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-lg font-semibold text-foreground">Financeiro</h1>
+          <p className="text-sm text-muted">
+            Informe faturamento, custo operacional e custo de anúncios da semana — imposto, comissão,
+            variável, saldo e lucro líquido são calculados automaticamente.
+          </p>
+        </div>
+        <Link
+          href="/financeiro/mensal"
+          className="shrink-0 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground hover:bg-background"
+        >
+          📅 Faturamento mensal
+        </Link>
       </div>
 
       <EntryForm employees={employees} />
