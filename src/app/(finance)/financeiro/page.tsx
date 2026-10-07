@@ -8,6 +8,21 @@ function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+const MONTH_NAMES = [
+  "janeiro",
+  "fevereiro",
+  "março",
+  "abril",
+  "maio",
+  "junho",
+  "julho",
+  "agosto",
+  "setembro",
+  "outubro",
+  "novembro",
+  "dezembro",
+];
+
 // entry.week_start_date e' sempre uma segunda-feira (ver lastMonday() no
 // formulario) — a semana de trabalho vai de segunda a sabado, entao o fim
 // e' sempre inicio + 5 dias.
@@ -56,14 +71,33 @@ function StatBox({
 export default async function FinanceiroPage() {
   const [employees, rows] = await Promise.all([listEmployeesForFinance(), listFinancialEntries()]);
 
-  const custoRanking = rows
-    .map(({ entry, employeeName, breakdown }) => ({
+  // Soma faturamento e custo operacional do mes atual por funcionaria (nao
+  // por lancamento semanal) — com varias semanas acumuladas, o ranking por
+  // lancamento ficava confuso demais; uma linha por pessoa, com o total do
+  // mes, e' o que da pra bater o olho e achar quem mais gasta.
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
+  const monthLabel = `${MONTH_NAMES[now.getMonth()]} de ${now.getFullYear()}`;
+
+  const monthlyTotalsByEmployee = new Map<string, { employeeName: string; faturamento: number; custoOperacional: number }>();
+  for (const { entry, employeeName } of rows) {
+    const entryDate = new Date(`${entry.week_start_date}T00:00:00`);
+    const entryMonthKey = `${entryDate.getFullYear()}-${entryDate.getMonth()}`;
+    if (entryMonthKey !== currentMonthKey) continue;
+
+    const acc = monthlyTotalsByEmployee.get(entry.employee_id) ?? { employeeName, faturamento: 0, custoOperacional: 0 };
+    acc.faturamento += entry.faturamento;
+    acc.custoOperacional += entry.custo_operacional;
+    monthlyTotalsByEmployee.set(entry.employee_id, acc);
+  }
+
+  const custoRanking = [...monthlyTotalsByEmployee.values()]
+    .map(({ employeeName, faturamento, custoOperacional }) => ({
       employeeName,
-      weekLabel: formatWeekRange(entry.week_start_date),
-      custoOperacional: breakdown.custoOperacional,
-      custoOperacionalPct: breakdown.custoOperacionalPct,
+      totalCustoOperacional: custoOperacional,
+      custoOperacionalPct: faturamento > 0 ? (custoOperacional / faturamento) * 100 : 0,
     }))
-    .sort((a, b) => b.custoOperacional - a.custoOperacional);
+    .sort((a, b) => b.totalCustoOperacional - a.totalCustoOperacional);
 
   return (
     <div className="space-y-8">
@@ -76,7 +110,7 @@ export default async function FinanceiroPage() {
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <CustoRankingButton entries={custoRanking} alertThreshold={CUSTO_OPERACIONAL_ALERT_PCT} />
+          <CustoRankingButton entries={custoRanking} alertThreshold={CUSTO_OPERACIONAL_ALERT_PCT} monthLabel={monthLabel} />
           <Link
             href="/financeiro/mensal"
             className="rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/30 transition hover:bg-primary/90 hover:shadow-lg"
