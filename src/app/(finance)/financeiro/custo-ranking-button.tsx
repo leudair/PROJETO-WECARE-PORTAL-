@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { BellIcon } from "@/components/icons";
 import { formatCurrency } from "./format";
 
 export interface CustoRankingEntry {
@@ -40,18 +41,18 @@ export function CustoRankingButton({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative rounded-md border border-border bg-surface p-2.5 text-foreground hover:bg-background"
+        className="relative flex h-[42px] w-[42px] items-center justify-center rounded-lg border border-border bg-surface-2 text-foreground hover:bg-surface"
         aria-label="Ranking de maiores gastos do mês"
       >
-        🔔
+        <BellIcon className="h-5 w-5" />
         {alertCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">
+          <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
             {alertCount}
           </span>
         )}
       </button>
       {open && (
-        <div className="absolute right-0 z-20 mt-2 max-h-96 w-80 overflow-y-auto rounded-md border border-border bg-surface p-3 shadow-lg">
+        <div className="absolute right-0 z-20 mt-2 max-h-96 w-80 overflow-y-auto rounded-xl border border-border bg-surface p-3 shadow-xl">
           <p className="mb-2 text-xs font-semibold text-foreground">
             Maiores gastos de {monthLabel} (custo operacional)
           </p>
@@ -62,16 +63,16 @@ export function CustoRankingButton({
             {entries.map((e, i) => {
               const isAlert = e.custoOperacionalPct > alertThreshold;
               return (
-                <div key={e.employeeName} className="rounded-md px-2 py-1.5 text-xs hover:bg-background">
+                <div key={e.employeeName} className="rounded-lg px-2.5 py-2 text-xs hover:bg-surface-2">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium text-foreground">
                       {i + 1}. {e.employeeName}
                     </span>
-                    <span className={isAlert ? "shrink-0 font-semibold text-red-700 dark:text-red-400" : "shrink-0 text-foreground"}>
+                    <span className={isAlert ? "shrink-0 font-semibold text-red-400" : "shrink-0 text-foreground"}>
                       {formatCurrency(e.totalCustoOperacional)}
                     </span>
                   </div>
-                  <p className={isAlert ? "text-[10px] font-semibold text-red-700 dark:text-red-400" : "text-[10px] text-muted"}>
+                  <p className={isAlert ? "text-[10px] font-semibold text-red-400" : "text-[10px] text-muted"}>
                     {e.custoOperacionalPct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% do faturamento do mês
                   </p>
                 </div>

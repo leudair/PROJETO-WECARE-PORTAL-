@@ -1,8 +1,7 @@
-import Image from "next/image";
-import Link from "next/link";
 import { requireAdmin } from "@/lib/data/auth";
 import { logout } from "@/app/logout-action";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Sidebar, type SidebarNavItem } from "@/components/sidebar";
+import { OverviewIcon, EmployeesIcon, MessagesIcon, FinanceIcon, RadarIcon } from "@/components/icons";
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "CEO",
@@ -12,61 +11,20 @@ const ROLE_LABEL: Record<string, string> = {
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireAdmin();
 
+  const navItems: SidebarNavItem[] = [
+    { href: "/admin", label: "Visão geral", icon: <OverviewIcon className="h-5 w-5" /> },
+    { href: "/financeiro", label: "Financeiro", icon: <FinanceIcon className="h-5 w-5" />, matchPrefix: true },
+    { href: "/admin/employees", label: "Funcionários", icon: <EmployeesIcon className="h-5 w-5" /> },
+    { href: "/admin/templates", label: "Mensagens", icon: <MessagesIcon className="h-5 w-5" /> },
+    { href: "https://wecare-radar.vercel.app", label: "Radar", icon: <RadarIcon className="h-5 w-5" />, external: true },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <nav className="flex items-center gap-4 overflow-x-auto text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Link href="/admin" className="flex shrink-0 items-center gap-2 whitespace-nowrap font-semibold text-foreground">
-              <Image
-                src="/logo-animada.webp"
-                alt="WeCare"
-                width={200}
-                height={200}
-                className="h-8 w-auto"
-                priority
-                unoptimized
-              />
-              Portal
-            </Link>
-            <Link href="/admin" className="shrink-0 whitespace-nowrap text-muted hover:text-foreground">
-              Visão geral
-            </Link>
-            <Link href="/admin/employees" className="shrink-0 whitespace-nowrap text-muted hover:text-foreground">
-              Funcionários
-            </Link>
-            <Link href="/admin/templates" className="shrink-0 whitespace-nowrap text-muted hover:text-foreground">
-              Mensagens
-            </Link>
-            <Link href="/financeiro" className="shrink-0 whitespace-nowrap text-muted hover:text-foreground">
-              Financeiro
-            </Link>
-            <a
-              href="https://wecare-radar.vercel.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 whitespace-nowrap text-muted hover:text-foreground"
-            >
-              Radar
-            </a>
-          </nav>
-          <div className="flex items-center gap-3 overflow-x-auto text-sm text-muted [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <span className="shrink-0 whitespace-nowrap">
-              {profile.full_name}
-              <span className="ml-1 text-xs text-muted">({ROLE_LABEL[profile.role] ?? profile.role})</span>
-            </span>
-            <form action={logout} className="shrink-0">
-              <button type="submit" className="whitespace-nowrap text-muted hover:text-foreground">
-                Sair
-              </button>
-            </form>
-            <span className="shrink-0">
-              <ThemeToggle />
-            </span>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar navItems={navItems} userName={profile.full_name} roleLabel={ROLE_LABEL[profile.role] ?? profile.role} logoutAction={logout} />
+      <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+        <div className="mx-auto max-w-7xl">{children}</div>
+      </main>
     </div>
   );
 }
