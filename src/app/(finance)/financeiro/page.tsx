@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CUSTO_OPERACIONAL_ALERT_PCT, listEmployeesForFinance, listFinancialEntries } from "@/lib/data/finance";
 import { EntryForm } from "./entry-form";
 import { EditEntryButton } from "./edit-entry-button";
+import { CustoRankingButton } from "./custo-ranking-button";
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -34,13 +35,7 @@ function StatBox({
   const colorClass = isPositive ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400";
 
   return (
-    <div
-      className={
-        alert
-          ? "rounded-lg border-2 border-red-400 bg-red-50 p-2 dark:border-red-800 dark:bg-red-950/30"
-          : "rounded-lg border border-border bg-background p-2"
-      }
-    >
+    <div className="rounded-lg border border-border bg-background p-2">
       <p className="text-[10px] uppercase text-muted">{label}</p>
       <p className={`font-semibold ${colorClass}`}>{formatCurrency(amount)}</p>
       {subLabel && (
@@ -51,7 +46,6 @@ function StatBox({
               : "text-[10px] text-muted"
           }
         >
-          {alert && "🔔 "}
           {subLabel}
         </p>
       )}
@@ -61,6 +55,15 @@ function StatBox({
 
 export default async function FinanceiroPage() {
   const [employees, rows] = await Promise.all([listEmployeesForFinance(), listFinancialEntries()]);
+
+  const custoRanking = rows
+    .map(({ entry, employeeName, breakdown }) => ({
+      employeeName,
+      weekLabel: formatWeekRange(entry.week_start_date),
+      custoOperacional: breakdown.custoOperacional,
+      custoOperacionalPct: breakdown.custoOperacionalPct,
+    }))
+    .sort((a, b) => b.custoOperacional - a.custoOperacional);
 
   return (
     <div className="space-y-8">
@@ -72,12 +75,15 @@ export default async function FinanceiroPage() {
             variável, saldo e lucro líquido são calculados automaticamente.
           </p>
         </div>
-        <Link
-          href="/financeiro/mensal"
-          className="shrink-0 rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground hover:bg-background"
-        >
-          📅 Faturamento mensal
-        </Link>
+        <div className="flex shrink-0 items-center gap-2">
+          <CustoRankingButton entries={custoRanking} alertThreshold={CUSTO_OPERACIONAL_ALERT_PCT} />
+          <Link
+            href="/financeiro/mensal"
+            className="rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/30 transition hover:bg-primary/90 hover:shadow-lg"
+          >
+            📅 Faturamento mensal
+          </Link>
+        </div>
       </div>
 
       <EntryForm employees={employees} />
