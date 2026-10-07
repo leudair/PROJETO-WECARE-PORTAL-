@@ -1,72 +1,8 @@
 import Link from "next/link";
 import { CUSTO_OPERACIONAL_ALERT_PCT, listEmployeesForFinance, listFinancialEntries } from "@/lib/data/finance";
 import { EntryForm } from "./entry-form";
-import { EditEntryButton } from "./edit-entry-button";
 import { CustoRankingButton } from "./custo-ranking-button";
-
-function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-const MONTH_NAMES = [
-  "janeiro",
-  "fevereiro",
-  "março",
-  "abril",
-  "maio",
-  "junho",
-  "julho",
-  "agosto",
-  "setembro",
-  "outubro",
-  "novembro",
-  "dezembro",
-];
-
-// entry.week_start_date e' sempre uma segunda-feira (ver lastMonday() no
-// formulario) — a semana de trabalho vai de segunda a sabado, entao o fim
-// e' sempre inicio + 5 dias.
-function formatWeekRange(weekStartIso: string) {
-  const start = new Date(`${weekStartIso}T00:00:00`);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 5);
-  return `${start.toLocaleDateString("pt-BR")} a ${end.toLocaleDateString("pt-BR")}`;
-}
-
-function StatBox({
-  label,
-  amount,
-  variant,
-  subLabel,
-  alert,
-}: {
-  label: string;
-  amount: number;
-  variant: "gain" | "cost" | "auto";
-  subLabel?: string;
-  alert?: boolean;
-}) {
-  const isPositive = variant === "gain" || (variant === "auto" && amount >= 0);
-  const colorClass = isPositive ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400";
-
-  return (
-    <div className="rounded-lg border border-border bg-background p-2">
-      <p className="text-[10px] uppercase text-muted">{label}</p>
-      <p className={`font-semibold ${colorClass}`}>{formatCurrency(amount)}</p>
-      {subLabel && (
-        <p
-          className={
-            alert
-              ? "text-[10px] font-semibold text-red-700 dark:text-red-400"
-              : "text-[10px] text-muted"
-          }
-        >
-          {subLabel}
-        </p>
-      )}
-    </div>
-  );
-}
+import { formatCurrency, formatWeekRange, MONTH_NAMES } from "./format";
 
 export default async function FinanceiroPage() {
   const [employees, rows] = await Promise.all([listEmployeesForFinance(), listFinancialEntries()]);
@@ -77,7 +13,7 @@ export default async function FinanceiroPage() {
   // mes, e' o que da pra bater o olho e achar quem mais gasta.
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
-  const monthLabel = `${MONTH_NAMES[now.getMonth()]} de ${now.getFullYear()}`;
+  const monthLabel = `${MONTH_NAMES[now.getMonth()].toLowerCase()} de ${now.getFullYear()}`;
 
   const monthlyTotalsByEmployee = new Map<string, { employeeName: string; faturamento: number; custoOperacional: number }>();
   for (const { entry, employeeName } of rows) {
@@ -98,6 +34,19 @@ export default async function FinanceiroPage() {
       custoOperacionalPct: faturamento > 0 ? (custoOperacional / faturamento) * 100 : 0,
     }))
     .sort((a, b) => b.totalCustoOperacional - a.totalCustoOperacional);
+
+  // Lista uma linha por funcionaria (nao por lancamento) — clica no nome e
+  // abre a historia completa dela em /financeiro/funcionario/[id], separada
+  // por mes. Evita misturar os lancamentos de todo mundo numa lista so.
+  const lastEntryByEmployee = new Map<string, (typeof rows)[number]>();
+  for (const row of rows) {
+    if (!lastEntryByEmployee.has(row.entry.employee_id)) {
+      lastEntryByEmployee.set(row.entry.employee_id, row);
+    }
+  }
+  const employeeList = [...lastEntryByEmployee.entries()]
+    .map(([employeeId, row]) => ({ employeeId, employeeName: row.employeeName, lastEntry: row }))
+    .sort((a, b) => a.employeeName.localeCompare(b.employeeName, "pt-BR"));
 
   return (
     <div className="space-y-8">
@@ -123,45 +72,28 @@ export default async function FinanceiroPage() {
       <EntryForm employees={employees} />
 
       <div>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Lançamentos</h2>
-        <div className="space-y-3">
-          {rows.length === 0 && (
+        <h2 className="mb-3 text-sm font-semibold text-foreground">Lançamentos por funcionária</h2>
+        <div className="space-y-2">
+          {employeeList.length === 0 && (
             <div className="rounded-xl border border-border bg-surface p-6 text-center text-sm text-muted">
               Nenhum lançamento ainda.
             </div>
           )}
-          {rows.map(({ entry, employeeName, breakdown }) => (
-            <div key={entry.id} className="rounded-xl border border-border bg-surface p-4">
-              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-1">
+          {employeeList.map(({ employeeId, employeeName, lastEntry }) => (
+            <Link
+              key={employeeId}
+              href={`/financeiro/funcionario/${employeeId}`}
+              className="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface p-4 hover:bg-background"
+            >
+              <div className="min-w-0">
                 <h3 className="font-semibold text-red-700 dark:text-red-400">{employeeName}</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted">Semana de {formatWeekRange(entry.week_start_date)}</span>
-                  <EditEntryButton
-                    employeeId={entry.employee_id}
-                    weekStartDate={entry.week_start_date}
-                    faturamento={entry.faturamento}
-                    custoOperacional={entry.custo_operacional}
-                    custoAnuncios={entry.custo_anuncios}
-                  />
-                </div>
+                <p className="text-xs text-muted">
+                  Última semana: {formatWeekRange(lastEntry.entry.week_start_date)} ·{" "}
+                  {formatCurrency(lastEntry.breakdown.faturamento)}
+                </p>
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                <StatBox label="Faturamento" amount={breakdown.faturamento} variant="gain" />
-                <StatBox
-                  label="Custo operacional"
-                  amount={breakdown.custoOperacional}
-                  variant="cost"
-                  subLabel={`${breakdown.custoOperacionalPct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% do faturamento`}
-                  alert={breakdown.custoOperacionalPct > CUSTO_OPERACIONAL_ALERT_PCT}
-                />
-                <StatBox label="Imposto (15%)" amount={breakdown.imposto} variant="cost" />
-                <StatBox label="Comissão (2,5%)" amount={breakdown.comissao} variant="cost" />
-                <StatBox label="Variável (4,5%)" amount={breakdown.variavel} variant="cost" />
-                <StatBox label="Saldo da operação" amount={breakdown.saldoOperacao} variant="auto" />
-                <StatBox label="Custo anúncios" amount={breakdown.custoAnuncios} variant="cost" />
-                <StatBox label="Lucro líquido" amount={breakdown.lucroLiquido} variant="auto" />
-              </div>
-            </div>
+              <span className="shrink-0 text-muted">→</span>
+            </Link>
           ))}
         </div>
       </div>
