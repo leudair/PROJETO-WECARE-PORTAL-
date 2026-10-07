@@ -18,7 +18,7 @@ export function NewEntryModal({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-md shadow-primary/30 transition hover:bg-primary-hover hover:shadow-lg"
+        className="btn-glossy rounded-lg px-4 py-2.5 text-sm font-bold text-primary-foreground"
       >
         + Novo lançamento
       </button>

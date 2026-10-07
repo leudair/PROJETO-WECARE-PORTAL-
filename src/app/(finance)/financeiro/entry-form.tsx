@@ -135,7 +135,7 @@ export function EntryForm({
       </div>
 
       {faturamento > 0 && (
-        <div className="rounded-xl border border-border bg-background p-4">
+        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-background to-surface p-4 shadow-inner">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Resumo estimado</p>
           <div className="grid grid-cols-2 gap-2 text-xs text-muted sm:grid-cols-4">
             <p>
@@ -166,7 +166,7 @@ export function EntryForm({
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-primary py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
+        className="btn-glossy w-full rounded-lg py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
       >
         {pending ? "Salvando..." : "Salvar lançamento"}
       </button>

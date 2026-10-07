@@ -44,9 +44,9 @@ export default async function AdminOverviewPage() {
             {(() => {
               const maxTotal = Math.max(...moneyOnTable.map((r) => r.total), 1);
               return moneyOnTable.map(({ employee, total, count }, i) => (
-                <div key={employee.id} className="relative overflow-hidden rounded-2xl border border-border bg-surface">
+                <div key={employee.id} className="card-glass relative overflow-hidden">
                   <div
-                    className="absolute inset-y-0 left-0 bg-primary/10"
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-red-500/20 to-red-500/5"
                     style={{ width: `${(total / maxTotal) * 100}%` }}
                   />
                   <div className="relative flex items-center justify-between gap-2 px-5 py-3.5">
@@ -71,7 +71,7 @@ export default async function AdminOverviewPage() {
           <h2 className="text-base font-bold text-foreground">Lembretes por funcionário</h2>
           <p className="mt-0.5 text-xs text-muted">Clique num funcionário pra ver todos os lembretes cadastrados por ele.</p>
         </div>
-        <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+        <div className="card-glass overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-surface-2 text-left text-xs font-semibold uppercase tracking-wide text-muted">
               <tr>

@@ -66,7 +66,7 @@ export default async function FinanceiroPage() {
             <CustoRankingButton entries={custoRanking} alertThreshold={CUSTO_OPERACIONAL_ALERT_PCT} monthLabel={monthLabel} />
             <Link
               href="/financeiro/mensal"
-              className="rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-surface"
+              className="rounded-lg border border-white/10 bg-gradient-to-b from-surface-2 to-surface px-4 py-2.5 text-sm font-semibold text-foreground shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] transition hover:from-surface hover:to-surface-2"
             >
               📅 Faturamento mensal
             </Link>
@@ -87,16 +87,26 @@ export default async function FinanceiroPage() {
             <Link
               key={employeeId}
               href={`/financeiro/funcionario/${employeeId}`}
-              className="flex items-center justify-between gap-2 rounded-2xl border border-border bg-surface p-5 shadow-sm transition hover:border-primary/40 hover:bg-surface-2"
+              className="card-glass group flex items-center justify-between gap-3 p-5 transition hover:border-primary/40"
             >
-              <div className="min-w-0">
-                <h3 className="font-bold text-foreground">{employeeName}</h3>
-                <p className="mt-0.5 text-xs text-muted">
-                  Última semana: {formatWeekRange(lastEntry.entry.week_start_date)} ·{" "}
-                  <span className="font-semibold text-green-400">{formatCurrency(lastEntry.breakdown.faturamento)}</span>
-                </p>
+              <div className="flex min-w-0 items-center gap-3.5">
+                <span className="icon-orb h-10 w-10 shrink-0 text-sm font-bold text-white">
+                  {employeeName
+                    .split(" ")
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((p) => p[0]?.toUpperCase())
+                    .join("")}
+                </span>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-foreground">{employeeName}</h3>
+                  <p className="mt-0.5 text-xs text-muted">
+                    Última semana: {formatWeekRange(lastEntry.entry.week_start_date)} ·{" "}
+                    <span className="font-semibold text-green-400">{formatCurrency(lastEntry.breakdown.faturamento)}</span>
+                  </p>
+                </div>
               </div>
-              <span className="shrink-0 text-lg text-muted">→</span>
+              <span className="shrink-0 text-lg text-muted transition group-hover:translate-x-0.5 group-hover:text-primary">→</span>
             </Link>
           ))}
         </div>
