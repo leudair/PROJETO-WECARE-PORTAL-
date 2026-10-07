@@ -1,114 +1,31 @@
 import Link from "next/link";
-import { listOverview, listEmployeeContactSummaries, type SummaryPeriod } from "@/lib/data/admin";
+import { listOverview, listEmployeeContactSummaries } from "@/lib/data/admin";
+import { listMonthlyRevenueEntries } from "@/lib/data/finance";
 import { PageHeader } from "@/components/page-header";
-
-const PERIOD_LABEL: Record<SummaryPeriod, string> = {
-  today: "Hoje",
-  "7d": "Últimos 7 dias",
-  all: "Total",
-};
+import { MonthlyRevenueChart, type RevenueEntry } from "./monthly-revenue-chart";
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-export default async function AdminOverviewPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ period?: string }>;
-}) {
-  const { period: periodParam } = await searchParams;
-  const period: SummaryPeriod = periodParam === "7d" || periodParam === "all" ? periodParam : "today";
-  const [{ responseSummary, moneyOnTable }, employeeSummaries] = await Promise.all([
-    listOverview(period),
+export default async function AdminOverviewPage() {
+  const [{ moneyOnTable }, employeeSummaries, monthlyRevenueRows] = await Promise.all([
+    listOverview(),
     listEmployeeContactSummaries(),
+    listMonthlyRevenueEntries(),
   ]);
+
+  const revenueEntries: RevenueEntry[] = monthlyRevenueRows.map(({ entry, employeeName }) => ({
+    employeeName,
+    monthKey: entry.month_start_date.slice(0, 7),
+    faturamento: entry.faturamento,
+  }));
 
   return (
     <div className="space-y-10">
-      <PageHeader
-        title="Visão geral"
-        description="Todos os lembretes cadastrados pelos funcionários e o status de disparo/resposta."
-      />
+      <PageHeader title="Visão geral" description="Faturamento da equipe e acompanhamento de leads." />
 
-      <div>
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-bold text-foreground">Taxa de resposta por funcionário</h2>
-          <div className="flex gap-1.5 text-xs">
-            {(Object.keys(PERIOD_LABEL) as SummaryPeriod[]).map((p) => (
-              <Link
-                key={p}
-                href={`/admin?period=${p}`}
-                className={
-                  p === period
-                    ? "rounded-lg bg-primary px-3 py-1.5 font-semibold text-primary-foreground"
-                    : "rounded-lg border border-border px-3 py-1.5 font-medium text-muted hover:text-foreground"
-                }
-              >
-                {PERIOD_LABEL[p]}
-              </Link>
-            ))}
-          </div>
-        </div>
-        {responseSummary.length === 0 ? (
-          <div className="rounded-2xl border border-border bg-surface p-8 text-center text-sm text-muted">
-            Nenhum funcionário cadastrado ainda.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {responseSummary.map(({ employee, sent, replied, pending, failed, responseRate }) => {
-              const pct = responseRate === null ? 0 : Math.round(responseRate * 100);
-              const barColor =
-                responseRate === null
-                  ? "bg-surface-2"
-                  : responseRate >= 0.7
-                    ? "bg-green-500"
-                    : responseRate >= 0.4
-                      ? "bg-yellow-500"
-                      : "bg-red-500";
-              const textColor =
-                responseRate === null
-                  ? "text-muted"
-                  : responseRate >= 0.7
-                    ? "text-green-400"
-                    : responseRate >= 0.4
-                      ? "text-yellow-400"
-                      : "text-red-400";
-              return (
-                <div key={employee.id} className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-bold text-foreground">{employee.full_name}</h3>
-                    <span className={`text-2xl font-bold tabular-nums ${textColor}`}>
-                      {responseRate === null ? "—" : `${pct}%`}
-                    </span>
-                  </div>
-                  <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-                    <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
-                  </div>
-                  <div className="mt-4 grid grid-cols-4 gap-2 text-center">
-                    <div>
-                      <p className="text-[10px] font-medium uppercase tracking-wide text-muted">Enviados</p>
-                      <p className="font-bold text-foreground">{sent}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-medium uppercase tracking-wide text-muted">Resp.</p>
-                      <p className="font-bold text-foreground">{replied}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-medium uppercase tracking-wide text-muted">Aguard.</p>
-                      <p className="font-bold text-foreground">{pending}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-medium uppercase tracking-wide text-muted">Falhas</p>
-                      <p className="font-bold text-foreground">{failed}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      <MonthlyRevenueChart entries={revenueEntries} />
 
       <div>
         <div className="mb-4">
