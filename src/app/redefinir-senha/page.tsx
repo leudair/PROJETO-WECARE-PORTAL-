@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useActionState } from "react";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { PasswordInput } from "@/components/password-input";
 import { updatePassword } from "./actions";
 
 export default function ResetPasswordPage() {
@@ -10,9 +10,6 @@ export default function ResetPasswordPage() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="absolute right-4 top-4">
-        <ThemeToggle />
-      </div>
       <form
         action={formAction}
         className="w-full max-w-sm space-y-4 rounded-xl border border-border bg-surface p-8 shadow-sm"
@@ -29,30 +26,14 @@ export default function ResetPasswordPage() {
           <label htmlFor="password" className="text-sm font-medium text-foreground">
             Nova senha
           </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
-          />
+          <PasswordInput id="password" name="password" required minLength={8} autoComplete="new-password" />
         </div>
 
         <div className="space-y-1">
           <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
             Confirmar nova senha
           </label>
-          <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
-          />
+          <PasswordInput id="confirmPassword" name="confirmPassword" required minLength={8} autoComplete="new-password" />
         </div>
 
         {state?.error && <p className="text-sm text-red-600">{state.error}</p>}

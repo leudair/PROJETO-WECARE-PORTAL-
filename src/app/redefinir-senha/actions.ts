@@ -20,8 +20,9 @@ export async function updatePassword(
   }
 
   const supabase = await createClient();
-  // So funciona com uma sessao valida de recuperacao, estabelecida pelo
-  // /api/auth/confirm a partir do link do email — sem isso, updateUser falha.
+  // So funciona com uma sessao valida de recuperacao, estabelecida pela
+  // Server Action de /confirmar-redefinicao a partir do link do email —
+  // sem isso, updateUser falha.
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {

@@ -5,9 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 export type ForgotPasswordState = { sent?: boolean; error?: string } | undefined;
 
 // O link enviado por email usa {{ .TokenHash }}/{{ .SiteURL }} do template
-// "Reset Password" do Supabase (ver /api/auth/confirm), entao redirectTo nao
-// e necessario aqui — evita depender do fluxo PKCE, que quebra quando o link
-// e aberto num dispositivo diferente do que pediu a redefinicao.
+// "Reset Password" do Supabase (ver /confirmar-redefinicao), entao redirectTo
+// nao e necessario aqui — evita depender do fluxo PKCE, que quebra quando o
+// link e aberto num dispositivo diferente do que pediu a redefinicao.
 export async function requestPasswordReset(
   _state: ForgotPasswordState,
   formData: FormData,

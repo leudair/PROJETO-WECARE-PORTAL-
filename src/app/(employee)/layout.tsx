@@ -1,51 +1,26 @@
-import Image from "next/image";
-import Link from "next/link";
 import { requireProfile } from "@/lib/data/auth";
 import { logout } from "@/app/logout-action";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Sidebar, type SidebarNavItem } from "@/components/sidebar";
+import { OverviewIcon, MessagesIcon, RadarIcon } from "@/components/icons";
 import { NoticeBanner } from "./notice-banner";
 
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireProfile();
 
+  const navItems: SidebarNavItem[] = [
+    { href: "/dashboard", label: "Meus contatos", icon: <OverviewIcon className="h-5 w-5" /> },
+    { href: "/dashboard/templates", label: "Mensagens", icon: <MessagesIcon className="h-5 w-5" /> },
+    { href: "https://wecare-radar.vercel.app", label: "Radar", icon: <RadarIcon className="h-5 w-5" />, external: true },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-foreground">
-              <Image src="/wecare-logo.png" alt="WeCare" width={140} height={60} className="h-6 w-auto" priority />
-              Portal
-            </Link>
-            <Link href="/dashboard" className="text-muted hover:text-foreground">
-              Meus contatos
-            </Link>
-            <Link href="/dashboard/templates" className="text-muted hover:text-foreground">
-              Mensagens
-            </Link>
-            <a
-              href="https://wecare-radar.vercel.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted hover:text-foreground"
-            >
-              Radar
-            </a>
-          </nav>
-          <div className="flex items-center gap-3 text-sm text-muted">
-            <span>{profile.full_name}</span>
-            <form action={logout}>
-              <button type="submit" className="text-muted hover:text-foreground">
-                Sair
-              </button>
-            </form>
-            <ThemeToggle />
-          </div>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar navItems={navItems} userName={profile.full_name} roleLabel="Funcionária" logoutAction={logout} />
+      <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+        <div className="mx-auto max-w-5xl">
+          <NoticeBanner />
+          {children}
         </div>
-      </header>
-      <main className="mx-auto max-w-3xl px-4 py-8">
-        <NoticeBanner />
-        {children}
       </main>
     </div>
   );

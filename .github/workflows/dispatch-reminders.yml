@@ -6,7 +6,12 @@ on:
     # a propria rota decide nao fazer nada fora de 06:00-11:00 — essa faixa
     # so garante cobertura de sobra nas bordas.
     - cron: "*/5 9-14 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Ignorar a janela de horario e forcar o disparo agora (so pra teste manual)"
+        type: boolean
+        default: false
 
 jobs:
   dispatch:
@@ -14,5 +19,5 @@ jobs:
     steps:
       - name: Chamar rota de disparo
         run: |
-          curl -sf -X GET "https://projeto-wecare-portal.vercel.app/api/cron/dispatch-reminders" \
+          curl -sf -X GET "https://portalwecare.com.br/api/cron/dispatch-reminders${{ inputs.force && '?force=1' || '' }}" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useActionState } from "react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { requestPasswordReset } from "./actions";
 
 export default function ForgotPasswordPage() {
@@ -11,9 +10,6 @@ export default function ForgotPasswordPage() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="absolute right-4 top-4">
-        <ThemeToggle />
-      </div>
       <div className="w-full max-w-sm space-y-4 rounded-xl border border-border bg-surface p-8 shadow-sm">
         <div className="space-y-3">
           <Image src="/wecare-logo.png" alt="WeCare" width={140} height={60} className="h-10 w-auto" priority />

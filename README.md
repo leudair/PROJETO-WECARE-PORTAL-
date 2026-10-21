@@ -47,12 +47,23 @@ npm run dev
 ## 4. Recuperação de senha ("Esqueci minha senha")
 
 1. Em **Authentication > URL Configuration**, confira se **Site URL** está com o domínio de produção (ex: `https://projeto-wecare-portal.vercel.app`), não `http://localhost:3000`.
-2. Em **Authentication > Email Templates > Reset Password**, troque o link do template para usar `{{ .TokenHash }}` em vez de `{{ .ConfirmationURL }}` — isso faz o link ir direto para a rota da aplicação (`/api/auth/confirm`) em vez de passar pelo domínio do próprio Supabase, e funciona mesmo se o link for aberto num aparelho diferente do que pediu a redefinição:
+2. Em **Authentication > Email Templates > Reset Password**, troque o link do template para usar `{{ .TokenHash }}` em vez de `{{ .ConfirmationURL }}` — isso faz o link ir direto para a página de confirmação da aplicação (`/confirmar-redefinicao`) em vez de passar pelo domínio do próprio Supabase, e funciona mesmo se o link for aberto num aparelho diferente do que pediu a redefinição. A página só troca o token pela sessão de recuperação quando a pessoa clica no botão — assim scanners de spam/antivírus que pré-clicam o link do email não gastam o token de uso único antes do clique real:
    ```html
-   <a href="{{ .SiteURL }}/api/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/redefinir-senha">Redefinir senha</a>
+   <a href="{{ .SiteURL }}/confirmar-redefinicao?token_hash={{ .TokenHash }}&type=recovery">Redefinir senha</a>
    ```
 
 Sem esse ajuste no template, o Supabase continua usando o link padrão (`{{ .ConfirmationURL }}`), que pode falhar se o link for aberto num navegador/aparelho diferente de onde a redefinição foi pedida.
+
+## 5. Login com Google
+
+O botão "Continuar com Google" (`src/app/login/page.tsx`) usa `supabase.auth.signInWithOAuth()` e a rota `src/app/api/auth/callback/route.ts` pra trocar o código do Google pela sessão. Precisa de duas configurações manuais antes de funcionar:
+
+1. **Google Cloud Console** ([console.cloud.google.com](https://console.cloud.google.com)) → *APIs & Services > Credentials* → criar um **OAuth client ID** do tipo **Web application**.
+   - Em **Authorized redirect URIs**, adicione a URL de callback que o Supabase mostra na tela do passo 2 (formato `https://<PROJECT_REF>.supabase.co/auth/v1/callback`).
+   - Copie o **Client ID** e o **Client Secret** gerados.
+2. Em **Authentication > Providers > Google** no painel do Supabase, ative o provider e cole o Client ID e Client Secret do passo 1.
+
+Sem essa configuração, o clique no botão redireciona pro Google mas volta com erro (`?erro=google_invalido` na tela de login).
 
 ## Papéis e acesso
 

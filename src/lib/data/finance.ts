@@ -91,6 +91,35 @@ export async function listFinancialEntries() {
   }));
 }
 
+export async function getEmployeeFinancialHistory(employeeId: string) {
+  await requireFinance();
+  const supabase = await createClient();
+
+  const [{ data: entries, error: entriesError }, { data: profile, error: profileError }] = await Promise.all([
+    supabase
+      .from("financial_entries")
+      .select("*")
+      .eq("employee_id", employeeId)
+      .order("week_start_date", { ascending: false }),
+    supabase.from("profiles").select("id, full_name").eq("id", employeeId).single(),
+  ]);
+
+  if (entriesError) throw entriesError;
+  if (profileError) throw profileError;
+
+  return {
+    employeeName: profile.full_name,
+    entries: entries.map((entry) => ({
+      entry,
+      breakdown: computeFinancials({
+        faturamento: entry.faturamento,
+        custoOperacional: entry.custo_operacional,
+        custoAnuncios: entry.custo_anuncios,
+      }),
+    })),
+  };
+}
+
 export const FinancialEntrySchema = z.object({
   employeeId: z.uuid(),
   weekStartDate: z.string().date(),
@@ -113,6 +142,49 @@ export async function upsertFinancialEntry(input: z.infer<typeof FinancialEntryS
       created_by: profile.id,
     },
     { onConflict: "employee_id,week_start_date" }
+  );
+
+  if (error) throw error;
+}
+
+export async function listMonthlyRevenueEntries() {
+  await requireFinance();
+  const supabase = await createClient();
+
+  const [{ data: entries, error: entriesError }, { data: profiles, error: profilesError }] = await Promise.all([
+    supabase.from("monthly_revenue_entries").select("*").order("month_start_date", { ascending: false }),
+    supabase.from("profiles").select("id, full_name"),
+  ]);
+
+  if (entriesError) throw entriesError;
+  if (profilesError) throw profilesError;
+
+  const nameById = new Map(profiles.map((p) => [p.id, p.full_name]));
+
+  return entries.map((entry) => ({
+    entry,
+    employeeName: nameById.get(entry.employee_id) ?? "—",
+  }));
+}
+
+export const MonthlyRevenueEntrySchema = z.object({
+  employeeId: z.uuid(),
+  monthStartDate: z.string().date(),
+  faturamento: z.coerce.number().min(0, "Valor não pode ser negativo."),
+});
+
+export async function upsertMonthlyRevenueEntry(input: z.infer<typeof MonthlyRevenueEntrySchema>) {
+  const profile = await requireFinance();
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("monthly_revenue_entries").upsert(
+    {
+      employee_id: input.employeeId,
+      month_start_date: input.monthStartDate,
+      faturamento: input.faturamento,
+      created_by: profile.id,
+    },
+    { onConflict: "employee_id,month_start_date" }
   );
 
   if (error) throw error;

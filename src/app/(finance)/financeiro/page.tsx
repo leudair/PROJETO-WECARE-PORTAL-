@@ -1,118 +1,113 @@
-import { CUSTO_OPERACIONAL_ALERT_PCT, listEmployeesForFinance, listFinancialEntries } from "@/lib/data/finance";
-import { EntryForm } from "./entry-form";
-import { EditEntryButton } from "./edit-entry-button";
-
-function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
-
-// entry.week_start_date e' sempre uma segunda-feira (ver lastMonday() no
-// formulario) — a semana de trabalho vai de segunda a sabado, entao o fim
-// e' sempre inicio + 5 dias.
-function formatWeekRange(weekStartIso: string) {
-  const start = new Date(`${weekStartIso}T00:00:00`);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 5);
-  return `${start.toLocaleDateString("pt-BR")} a ${end.toLocaleDateString("pt-BR")}`;
-}
-
-function StatBox({
-  label,
-  amount,
-  variant,
-  subLabel,
-  alert,
-}: {
-  label: string;
-  amount: number;
-  variant: "gain" | "cost" | "auto";
-  subLabel?: string;
-  alert?: boolean;
-}) {
-  const isPositive = variant === "gain" || (variant === "auto" && amount >= 0);
-  const colorClass = isPositive ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400";
-
-  return (
-    <div
-      className={
-        alert
-          ? "rounded-lg border-2 border-red-400 bg-red-50 p-2 dark:border-red-800 dark:bg-red-950/30"
-          : "rounded-lg border border-border bg-background p-2"
-      }
-    >
-      <p className="text-[10px] uppercase text-muted">{label}</p>
-      <p className={`font-semibold ${colorClass}`}>{formatCurrency(amount)}</p>
-      {subLabel && (
-        <p
-          className={
-            alert
-              ? "text-[10px] font-semibold text-red-700 dark:text-red-400"
-              : "text-[10px] text-muted"
-          }
-        >
-          {alert && "🔔 "}
-          {subLabel}
-        </p>
-      )}
-    </div>
-  );
-}
+import Link from "next/link";
+import {
+  CUSTO_OPERACIONAL_ALERT_PCT,
+  TAX_RATE,
+  COMMISSION_RATE,
+  VARIABLE_RATE,
+  listEmployeesForFinance,
+  listFinancialEntries,
+} from "@/lib/data/finance";
+import { PageHeader } from "@/components/page-header";
+import { NewEntryModal } from "./new-entry-modal";
+import { CustoRankingButton } from "./custo-ranking-button";
+import { formatCurrency, formatWeekRange, MONTH_NAMES } from "./format";
 
 export default async function FinanceiroPage() {
   const [employees, rows] = await Promise.all([listEmployeesForFinance(), listFinancialEntries()]);
 
+  // Soma faturamento e custo operacional do mes atual por funcionaria (nao
+  // por lancamento semanal) — com varias semanas acumuladas, o ranking por
+  // lancamento ficava confuso demais; uma linha por pessoa, com o total do
+  // mes, e' o que da pra bater o olho e achar quem mais gasta.
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
+  const monthLabel = `${MONTH_NAMES[now.getMonth()].toLowerCase()} de ${now.getFullYear()}`;
+
+  const monthlyTotalsByEmployee = new Map<string, { employeeName: string; faturamento: number; custoOperacional: number }>();
+  for (const { entry, employeeName } of rows) {
+    const entryDate = new Date(`${entry.week_start_date}T00:00:00`);
+    const entryMonthKey = `${entryDate.getFullYear()}-${entryDate.getMonth()}`;
+    if (entryMonthKey !== currentMonthKey) continue;
+
+    const acc = monthlyTotalsByEmployee.get(entry.employee_id) ?? { employeeName, faturamento: 0, custoOperacional: 0 };
+    acc.faturamento += entry.faturamento;
+    acc.custoOperacional += entry.custo_operacional;
+    monthlyTotalsByEmployee.set(entry.employee_id, acc);
+  }
+
+  const custoRanking = [...monthlyTotalsByEmployee.values()]
+    .map(({ employeeName, faturamento, custoOperacional }) => ({
+      employeeName,
+      totalCustoOperacional: custoOperacional,
+      custoOperacionalPct: faturamento > 0 ? (custoOperacional / faturamento) * 100 : 0,
+    }))
+    .sort((a, b) => b.totalCustoOperacional - a.totalCustoOperacional);
+
+  // Lista uma linha por funcionaria (nao por lancamento) — clica no nome e
+  // abre a historia completa dela em /financeiro/funcionario/[id], separada
+  // por mes. Evita misturar os lancamentos de todo mundo numa lista so.
+  const lastEntryByEmployee = new Map<string, (typeof rows)[number]>();
+  for (const row of rows) {
+    if (!lastEntryByEmployee.has(row.entry.employee_id)) {
+      lastEntryByEmployee.set(row.entry.employee_id, row);
+    }
+  }
+  const employeeList = [...lastEntryByEmployee.entries()]
+    .map(([employeeId, row]) => ({ employeeId, employeeName: row.employeeName, lastEntry: row }))
+    .sort((a, b) => a.employeeName.localeCompare(b.employeeName, "pt-BR"));
+
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-lg font-semibold text-foreground">Financeiro</h1>
-        <p className="text-sm text-muted">
-          Informe faturamento, custo operacional e custo de anúncios da semana — imposto, comissão,
-          variável, saldo e lucro líquido são calculados automaticamente.
-        </p>
-      </div>
+    <div className="space-y-10">
+      <PageHeader
+        title="Financeiro"
+        description="Faturamento, custo operacional e custo de anúncios da semana — imposto, comissão, variável, saldo e lucro líquido calculados automaticamente."
+        action={
+          <>
+            <CustoRankingButton entries={custoRanking} alertThreshold={CUSTO_OPERACIONAL_ALERT_PCT} monthLabel={monthLabel} />
+            <Link
+              href="/financeiro/mensal"
+              className="rounded-lg border border-white/10 bg-gradient-to-b from-surface-2 to-surface px-4 py-2.5 text-sm font-semibold text-foreground shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] transition hover:from-surface hover:to-surface-2"
+            >
+              📅 Faturamento mensal
+            </Link>
+            <NewEntryModal employees={employees} rates={{ tax: TAX_RATE, commission: COMMISSION_RATE, variable: VARIABLE_RATE }} />
+          </>
+        }
+      />
 
-      <EntryForm employees={employees} />
-
       <div>
-        <h2 className="mb-3 text-sm font-semibold text-foreground">Lançamentos</h2>
-        <div className="space-y-3">
-          {rows.length === 0 && (
-            <div className="rounded-xl border border-border bg-surface p-6 text-center text-sm text-muted">
+        <h2 className="mb-4 text-base font-bold text-foreground">Lançamentos por funcionária</h2>
+        <div className="space-y-2.5">
+          {employeeList.length === 0 && (
+            <div className="rounded-2xl border border-border bg-surface p-8 text-center text-sm text-muted">
               Nenhum lançamento ainda.
             </div>
           )}
-          {rows.map(({ entry, employeeName, breakdown }) => (
-            <div key={entry.id} className="rounded-xl border border-border bg-surface p-4">
-              <div className="mb-3 flex flex-wrap items-baseline justify-between gap-1">
-                <h3 className="font-semibold text-foreground">{employeeName}</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted">Semana de {formatWeekRange(entry.week_start_date)}</span>
-                  <EditEntryButton
-                    employeeId={entry.employee_id}
-                    weekStartDate={entry.week_start_date}
-                    faturamento={entry.faturamento}
-                    custoOperacional={entry.custo_operacional}
-                    custoAnuncios={entry.custo_anuncios}
-                  />
+          {employeeList.map(({ employeeId, employeeName, lastEntry }) => (
+            <Link
+              key={employeeId}
+              href={`/financeiro/funcionario/${employeeId}`}
+              className="card-glass group flex items-center justify-between gap-3 p-5 transition hover:border-primary/40"
+            >
+              <div className="flex min-w-0 items-center gap-3.5">
+                <span className="icon-orb h-10 w-10 shrink-0 text-sm font-bold text-white">
+                  {employeeName
+                    .split(" ")
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((p) => p[0]?.toUpperCase())
+                    .join("")}
+                </span>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-foreground">{employeeName}</h3>
+                  <p className="mt-0.5 text-xs text-muted">
+                    Última semana: {formatWeekRange(lastEntry.entry.week_start_date)} ·{" "}
+                    <span className="font-semibold text-green-400">{formatCurrency(lastEntry.breakdown.faturamento)}</span>
+                  </p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                <StatBox label="Faturamento" amount={breakdown.faturamento} variant="gain" />
-                <StatBox
-                  label="Custo operacional"
-                  amount={breakdown.custoOperacional}
-                  variant="cost"
-                  subLabel={`${breakdown.custoOperacionalPct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% do faturamento`}
-                  alert={breakdown.custoOperacionalPct > CUSTO_OPERACIONAL_ALERT_PCT}
-                />
-                <StatBox label="Imposto (15%)" amount={breakdown.imposto} variant="cost" />
-                <StatBox label="Comissão (2,5%)" amount={breakdown.comissao} variant="cost" />
-                <StatBox label="Variável (4,5%)" amount={breakdown.variavel} variant="cost" />
-                <StatBox label="Saldo da operação" amount={breakdown.saldoOperacao} variant="auto" />
-                <StatBox label="Custo anúncios" amount={breakdown.custoAnuncios} variant="cost" />
-                <StatBox label="Lucro líquido" amount={breakdown.lucroLiquido} variant="auto" />
-              </div>
-            </div>
+              <span className="shrink-0 text-lg text-muted transition group-hover:translate-x-0.5 group-hover:text-primary">→</span>
+            </Link>
           ))}
         </div>
       </div>
