@@ -55,7 +55,7 @@ export function EntryForm({ employees }: { employees: { id: string; full_name: s
     <form action={formAction} className="space-y-4 rounded-xl border border-border bg-surface p-6">
       <h2 className="text-sm font-semibold text-foreground">Lançamento mensal</h2>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground">Funcionário</label>
           <EmployeeSelect employees={employees} />

@@ -72,42 +72,44 @@ export default async function AdminOverviewPage() {
           <p className="mt-0.5 text-xs text-muted">Clique num funcionário pra ver todos os lembretes cadastrados por ele.</p>
         </div>
         <div className="card-glass overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-2 text-left text-xs font-semibold uppercase tracking-wide text-muted">
-              <tr>
-                <th className="px-5 py-3">Funcionário</th>
-                <th className="px-5 py-3">Clientes</th>
-                <th className="px-5 py-3">Leads</th>
-                <th className="px-5 py-3">Total</th>
-                <th className="px-5 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {employeeSummaries.length === 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] text-sm">
+              <thead className="bg-surface-2 text-left text-xs font-semibold uppercase tracking-wide text-muted">
                 <tr>
-                  <td colSpan={5} className="px-5 py-8 text-center text-muted">
-                    Nenhum funcionário cadastrado ainda.
-                  </td>
+                  <th className="px-5 py-3">Funcionário</th>
+                  <th className="px-5 py-3">Clientes</th>
+                  <th className="px-5 py-3">Leads</th>
+                  <th className="px-5 py-3">Total</th>
+                  <th className="px-5 py-3"></th>
                 </tr>
-              )}
-              {employeeSummaries.map(({ employee, total, leads, clientes }) => (
-                <tr key={employee.id} className="border-t border-border hover:bg-surface-2/60">
-                  <td className="px-5 py-3 font-medium text-foreground">{employee.full_name}</td>
-                  <td className="px-5 py-3 text-muted">{clientes}</td>
-                  <td className="px-5 py-3 text-muted">{leads}</td>
-                  <td className="px-5 py-3 text-muted">{total}</td>
-                  <td className="px-5 py-3 text-right">
-                    <Link
-                      href={`/admin/funcionario/${employee.id}`}
-                      className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-primary hover:bg-surface-2"
-                    >
-                      Ver lembretes
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {employeeSummaries.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-5 py-8 text-center text-muted">
+                      Nenhum funcionário cadastrado ainda.
+                    </td>
+                  </tr>
+                )}
+                {employeeSummaries.map(({ employee, total, leads, clientes }) => (
+                  <tr key={employee.id} className="border-t border-border hover:bg-surface-2/60">
+                    <td className="px-5 py-3 font-medium text-foreground">{employee.full_name}</td>
+                    <td className="px-5 py-3 text-muted">{clientes}</td>
+                    <td className="px-5 py-3 text-muted">{leads}</td>
+                    <td className="px-5 py-3 text-muted">{total}</td>
+                    <td className="px-5 py-3 text-right">
+                      <Link
+                        href={`/admin/funcionario/${employee.id}`}
+                        className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-primary hover:bg-surface-2"
+                      >
+                        Ver lembretes
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
