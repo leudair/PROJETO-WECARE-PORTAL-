@@ -1,7 +1,7 @@
 import { requireProfile } from "@/lib/data/auth";
 import { logout } from "@/app/logout-action";
 import { Sidebar, type SidebarNavItem } from "@/components/sidebar";
-import { OverviewIcon, MessagesIcon, RadarIcon } from "@/components/icons";
+import { OverviewIcon, RadarIcon } from "@/components/icons";
 import { NoticeBanner } from "./notice-banner";
 
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
@@ -9,8 +9,8 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
 
   const navItems: SidebarNavItem[] = [
     { href: "/dashboard", label: "Meus contatos", icon: <OverviewIcon className="h-5 w-5" /> },
-    { href: "/dashboard/templates", label: "Mensagens", icon: <MessagesIcon className="h-5 w-5" /> },
-    { href: "https://wecare-radar.vercel.app", label: "Radar", icon: <RadarIcon className="h-5 w-5" />, external: true },
+    // "Mensagens" (funil de lead) em stand-by — ver (admin)/layout.tsx
+    { href: "https://radar.portalwecare.com.br", label: "Radar", icon: <RadarIcon className="h-5 w-5" />, external: true },
   ];
 
   return (
