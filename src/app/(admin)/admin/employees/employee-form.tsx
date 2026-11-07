@@ -22,10 +22,10 @@ export function EmployeeForm({ canCreateManager }: { canCreateManager: boolean }
   const [password, setPassword] = useState("");
 
   return (
-    <form action={formAction} className="space-y-4 rounded-xl border border-border bg-surface p-6">
-      <h2 className="text-sm font-semibold text-foreground">Novo acesso</h2>
+    <form action={formAction} className="card-glass space-y-4 p-6">
+      <h2 className="text-sm font-bold text-foreground">Novo acesso</h2>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground">Nome</label>
           <input name="fullName" required className="w-full rounded-md border border-border px-3 py-2 text-sm" />
@@ -54,7 +54,7 @@ export function EmployeeForm({ canCreateManager }: { canCreateManager: boolean }
         </select>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground">WhatsApp do funcionário</label>
           <input
@@ -93,7 +93,7 @@ export function EmployeeForm({ canCreateManager }: { canCreateManager: boolean }
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        className="btn-glossy rounded-lg px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
       >
         {pending ? "Criando..." : "Criar acesso"}
       </button>

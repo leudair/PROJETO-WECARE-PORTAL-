@@ -1,56 +1,36 @@
-import Image from "next/image";
-import Link from "next/link";
 import { requireFinance } from "@/lib/data/auth";
 import { logout } from "@/app/logout-action";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Sidebar, type SidebarNavItem } from "@/components/sidebar";
+import { OverviewIcon, EmployeesIcon, MessagesIcon, FinanceIcon, RadarIcon } from "@/components/icons";
+
+const ROLE_LABEL: Record<string, string> = {
+  admin: "CEO",
+  manager: "Gerente",
+  financeiro: "Financeiro",
+};
 
 export default async function FinanceLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireFinance();
   const canSeeAdmin = profile.role === "admin" || profile.role === "manager";
 
+  const navItems: SidebarNavItem[] = [
+    ...(canSeeAdmin ? [{ href: "/admin", label: "Visão geral", icon: <OverviewIcon className="h-5 w-5" /> }] : []),
+    { href: "/financeiro", label: "Financeiro", icon: <FinanceIcon className="h-5 w-5" />, matchPrefix: true },
+    ...(canSeeAdmin
+      ? [
+          { href: "/admin/employees", label: "Funcionários", icon: <EmployeesIcon className="h-5 w-5" /> },
+          { href: "/admin/templates", label: "Mensagens", icon: <MessagesIcon className="h-5 w-5" /> },
+        ]
+      : []),
+    { href: "https://wecare-radar.vercel.app", label: "Radar", icon: <RadarIcon className="h-5 w-5" />, external: true },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-surface">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/financeiro" className="flex items-center gap-2 font-semibold text-foreground">
-              <Image
-                src="/logo-animada.webp"
-                alt="WeCare"
-                width={200}
-                height={200}
-                className="h-8 w-auto"
-                priority
-                unoptimized
-              />
-              Financeiro
-            </Link>
-            {canSeeAdmin && (
-              <>
-                <Link href="/admin" className="text-muted hover:text-foreground">
-                  Visão geral
-                </Link>
-                <Link href="/admin/employees" className="text-muted hover:text-foreground">
-                  Funcionários
-                </Link>
-                <Link href="/admin/templates" className="text-muted hover:text-foreground">
-                  Mensagens
-                </Link>
-              </>
-            )}
-          </nav>
-          <div className="flex items-center gap-3 text-sm text-muted">
-            <span>{profile.full_name}</span>
-            <form action={logout}>
-              <button type="submit" className="text-muted hover:text-foreground">
-                Sair
-              </button>
-            </form>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar navItems={navItems} userName={profile.full_name} roleLabel={ROLE_LABEL[profile.role] ?? profile.role} logoutAction={logout} />
+      <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+        <div className="mx-auto max-w-7xl">{children}</div>
+      </main>
     </div>
   );
 }

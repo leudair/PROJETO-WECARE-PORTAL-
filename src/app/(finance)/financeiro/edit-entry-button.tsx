@@ -35,7 +35,7 @@ export function EditEntryButton({
       <input type="hidden" name="weekStartDate" value={weekStartDate} />
       <input type="hidden" name="weekEndDate" value={weekEndDate} />
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         <div className="space-y-0.5">
           <label className="text-[10px] uppercase text-muted">Faturamento (R$)</label>
           <input
