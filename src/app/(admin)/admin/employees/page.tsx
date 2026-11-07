@@ -1,5 +1,6 @@
 import { listEmployees } from "@/lib/data/admin";
 import { getCurrentProfile } from "@/lib/data/auth";
+import { getEmployeeSiteUrl } from "@/lib/employee-site";
 import { EmployeeForm } from "./employee-form";
 import { NoticeForm } from "./notice-form";
 import { DeleteEmployeeButton } from "./delete-button";
@@ -22,12 +23,13 @@ export default async function EmployeesPage() {
         <h2 className="mb-3 text-base font-bold text-foreground">Funcionários, gerentes e financeiro</h2>
         <div className="card-glass overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
+            <table className="w-full min-w-[800px] text-sm">
               <thead className="bg-surface-2 text-left text-xs font-semibold uppercase tracking-wide text-muted">
                 <tr>
                   <th className="px-5 py-3">Nome</th>
                   <th className="px-5 py-3">Papel</th>
                   <th className="px-5 py-3">WhatsApp</th>
+                  <th className="px-5 py-3">Site</th>
                   <th className="px-5 py-3">Exportar</th>
                   <th className="px-5 py-3">Aviso</th>
                   <th className="px-5 py-3"></th>
@@ -36,7 +38,7 @@ export default async function EmployeesPage() {
               <tbody>
                 {employees.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-muted">
+                    <td colSpan={7} className="px-5 py-8 text-center text-muted">
                       Nenhum funcionário cadastrado ainda.
                     </td>
                   </tr>
@@ -66,6 +68,23 @@ export default async function EmployeesPage() {
                     </td>
                     <td className="px-5 py-3 text-muted">{ROLE_LABEL[employee.role] ?? employee.role}</td>
                     <td className="px-5 py-3 text-muted">{employee.whatsapp_number}</td>
+                    <td className="px-5 py-3">
+                      {(() => {
+                        const siteUrl = getEmployeeSiteUrl(employee.full_name);
+                        return siteUrl ? (
+                          <a
+                            href={siteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary underline hover:text-foreground"
+                          >
+                            Abrir
+                          </a>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        );
+                      })()}
+                    </td>
                     <td className="px-5 py-3">
                       {employee.role === "employee" ? (
                         <>

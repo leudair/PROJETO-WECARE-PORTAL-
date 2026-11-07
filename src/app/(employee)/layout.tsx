@@ -1,15 +1,18 @@
 import { requireProfile } from "@/lib/data/auth";
 import { logout } from "@/app/logout-action";
 import { Sidebar, type SidebarNavItem } from "@/components/sidebar";
-import { OverviewIcon, RadarIcon } from "@/components/icons";
+import { OverviewIcon, RadarIcon, SiteIcon } from "@/components/icons";
 import { NoticeBanner } from "./notice-banner";
+import { getEmployeeSiteUrl } from "@/lib/employee-site";
 
 export default async function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireProfile();
+  const mySiteUrl = getEmployeeSiteUrl(profile.full_name);
 
   const navItems: SidebarNavItem[] = [
     { href: "/dashboard", label: "Meus contatos", icon: <OverviewIcon className="h-5 w-5" /> },
     // "Mensagens" (funil de lead) em stand-by — ver (admin)/layout.tsx
+    ...(mySiteUrl ? [{ href: mySiteUrl, label: "Meu site", icon: <SiteIcon className="h-5 w-5" />, external: true }] : []),
     { href: "https://radar.portalwecare.com.br", label: "Radar", icon: <RadarIcon className="h-5 w-5" />, external: true },
   ];
 
