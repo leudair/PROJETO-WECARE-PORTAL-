@@ -12,6 +12,7 @@ export async function saveFinancialEntryAction(
   const parsed = FinancialEntrySchema.safeParse({
     employeeId: formData.get("employeeId"),
     weekStartDate: formData.get("weekStartDate"),
+    weekEndDate: formData.get("weekEndDate"),
     faturamento: formData.get("faturamento"),
     custoOperacional: formData.get("custoOperacional"),
     custoAnuncios: formData.get("custoAnuncios"),

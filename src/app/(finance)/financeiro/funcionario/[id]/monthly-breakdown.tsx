@@ -10,6 +10,7 @@ interface EntryRow {
     id: string;
     employee_id: string;
     week_start_date: string;
+    week_end_date: string;
     faturamento: number;
     custo_operacional: number;
     custo_anuncios: number;
@@ -135,10 +136,13 @@ export function MonthlyBreakdown({ entries, alertThreshold }: { entries: EntryRo
         {entriesInMonth.map(({ entry, breakdown }) => (
           <div key={entry.id} className="rounded-xl border border-border bg-surface p-4">
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-1">
-              <span className="text-xs text-muted">Semana de {formatWeekRange(entry.week_start_date)}</span>
+              <span className="text-xs text-muted">
+                Semana de {formatWeekRange(entry.week_start_date, entry.week_end_date)}
+              </span>
               <EditEntryButton
                 employeeId={entry.employee_id}
                 weekStartDate={entry.week_start_date}
+                weekEndDate={entry.week_end_date}
                 faturamento={entry.faturamento}
                 custoOperacional={entry.custo_operacional}
                 custoAnuncios={entry.custo_anuncios}

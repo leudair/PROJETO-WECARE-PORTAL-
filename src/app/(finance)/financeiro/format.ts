@@ -2,13 +2,10 @@ export function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-// entry.week_start_date e' sempre uma segunda-feira (ver lastMonday() no
-// formulario) — a semana de trabalho vai de segunda a sabado, entao o fim
-// e' sempre inicio + 5 dias.
-export function formatWeekRange(weekStartIso: string) {
+// week_end_date vem salvo no banco (periodo livre, nao so inicio + 5 dias).
+export function formatWeekRange(weekStartIso: string, weekEndIso: string) {
   const start = new Date(`${weekStartIso}T00:00:00`);
-  const end = new Date(start);
-  end.setDate(end.getDate() + 5);
+  const end = new Date(`${weekEndIso}T00:00:00`);
   return `${start.toLocaleDateString("pt-BR")} a ${end.toLocaleDateString("pt-BR")}`;
 }
 

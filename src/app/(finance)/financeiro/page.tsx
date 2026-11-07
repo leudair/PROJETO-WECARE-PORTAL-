@@ -101,7 +101,7 @@ export default async function FinanceiroPage() {
                 <div className="min-w-0">
                   <h3 className="font-bold text-foreground">{employeeName}</h3>
                   <p className="mt-0.5 text-xs text-muted">
-                    Última semana: {formatWeekRange(lastEntry.entry.week_start_date)} ·{" "}
+                    Última semana: {formatWeekRange(lastEntry.entry.week_start_date, lastEntry.entry.week_end_date)} ·{" "}
                     <span className="font-semibold text-green-400">{formatCurrency(lastEntry.breakdown.faturamento)}</span>
                   </p>
                 </div>
