@@ -107,6 +107,14 @@ export function BuildingIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function TelegramIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M21 4 3 11.5l6 2.2M21 4l-3.2 16-6-4.3M21 4 9.8 13.7v4l2.8-2.6" />
+    </Icon>
+  );
+}
+
 export function SettingsIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
