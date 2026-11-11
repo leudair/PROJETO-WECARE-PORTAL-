@@ -115,6 +115,15 @@ export function TelegramIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function MeetingIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="2.5" y="6" width="13" height="12" rx="2" />
+      <path d="M15.5 10.5 21 7v10l-5.5-3.5" />
+    </Icon>
+  );
+}
+
 export function SettingsIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

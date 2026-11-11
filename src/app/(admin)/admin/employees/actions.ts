@@ -94,6 +94,7 @@ export async function updateEmployeeAction(
     whatsappNumber: formData.get("whatsappNumber"),
     role: formData.get("role"),
     password: formData.get("password") || undefined,
+    monthlyGoal: formData.get("monthlyGoal") || undefined,
   });
 
   if (!parsed.success) {

@@ -63,6 +63,7 @@ export default async function EmployeesPage() {
                           email={employee.email}
                           whatsappNumber={employee.whatsapp_number}
                           role={employee.role}
+                          monthlyGoal={employee.monthly_goal}
                           canSetElevatedRole={profile?.role === "admin"}
                         />
                       </div>
