@@ -73,6 +73,10 @@ export function Sidebar({
     .map((part) => part[0]?.toUpperCase())
     .join("");
 
+  // "W1 - Eduarda Martins" -> "Eduarda Martins": o quadro de foto mostra o
+  // nome da pessoa, o codigo W ja aparece no rodape junto do cargo.
+  const displayName = userName.replace(/^W\d+\s*-\s*/i, "");
+
   function isActive(item: SidebarNavItem) {
     if (item.external) return false;
     if (item.matchPrefix) return pathname.startsWith(item.href);
@@ -94,13 +98,17 @@ export function Sidebar({
       </div>
 
       {!collapsed && (
-        <div className="px-4 pb-4">
+        <div className="flex flex-col items-center gap-2 px-4 pb-5">
           {/* Foto da funcionaria — por enquanto so as iniciais (sem upload
-              ainda); o quadrado (em vez do circulo do rodape) e' de proposito,
-              pra diferenciar essa "foto de perfil" do avatarzinho pequeno. */}
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f06478] to-[#b0102f] text-lg font-bold text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_6px_16px_-4px_rgba(196,18,48,0.55)]">
-            {initials || "?"}
+              ainda). Proporcao 3x4 (retrato), com moldura dupla discreta
+              (linha dourada por fora, linha clara por dentro) pra um
+              acabamento mais "quadro na parede" do que avatar de app. */}
+          <div className="flex h-32 w-24 items-center justify-center rounded-md border border-[#c9a227]/40 bg-gradient-to-br from-[#f06478] to-[#b0102f] p-[3px] shadow-[0_6px_16px_-4px_rgba(196,18,48,0.45)]">
+            <div className="flex h-full w-full items-center justify-center rounded-[3px] border border-white/15 text-2xl font-bold text-white">
+              {initials || "?"}
+            </div>
           </div>
+          <span className="max-w-[96px] truncate text-xs font-semibold text-foreground">{displayName}</span>
         </div>
       )}
 
