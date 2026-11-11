@@ -1,7 +1,8 @@
 import { requireFinance } from "@/lib/data/auth";
 import { logout } from "@/app/logout-action";
 import { Sidebar, type SidebarNavItem } from "@/components/sidebar";
-import { OverviewIcon, EmployeesIcon, FinanceIcon, RadarIcon } from "@/components/icons";
+import { AiIcon, CrmIcon, MeetingIcon, OverviewIcon, EmployeesIcon, FinanceIcon, RadarIcon, SiteIcon, TelegramIcon } from "@/components/icons";
+import { getEmployeeAiUrl, getEmployeeSiteUrl } from "@/lib/employee-site";
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "CEO",
@@ -12,6 +13,8 @@ const ROLE_LABEL: Record<string, string> = {
 export default async function FinanceLayout({ children }: { children: React.ReactNode }) {
   const profile = await requireFinance();
   const canSeeAdmin = profile.role === "admin" || profile.role === "manager";
+  const mySiteUrl = getEmployeeSiteUrl(profile.full_name);
+  const myAiUrl = getEmployeeAiUrl(profile.full_name);
 
   const navItems: SidebarNavItem[] = [
     ...(canSeeAdmin ? [{ href: "/admin", label: "Visão geral", icon: <OverviewIcon className="h-5 w-5" /> }] : []),
@@ -20,7 +23,12 @@ export default async function FinanceLayout({ children }: { children: React.Reac
     ...(canSeeAdmin
       ? [{ href: "/admin/employees", label: "Funcionários", icon: <EmployeesIcon className="h-5 w-5" /> }]
       : []),
+    ...(mySiteUrl ? [{ href: mySiteUrl, label: "Meu site", icon: <SiteIcon className="h-5 w-5" />, external: true }] : []),
+    ...(myAiUrl ? [{ href: myAiUrl, label: "Minha IA", icon: <AiIcon className="h-5 w-5" />, external: true }] : []),
     { href: "https://radar.portalwecare.com.br", label: "Radar", icon: <RadarIcon className="h-5 w-5" />, external: true },
+    { href: "https://t.me/agenciawecare_bot", label: "Bot de avisos", icon: <TelegramIcon className="h-5 w-5" />, external: true },
+    { href: "#", label: "Reunião", icon: <MeetingIcon className="h-5 w-5" />, disabled: true },
+    { href: "#", label: "CRM", icon: <CrmIcon className="h-5 w-5" />, disabled: true },
   ];
 
   return (

@@ -13,6 +13,8 @@ export interface SidebarNavItem {
   external?: boolean;
   /** Quando a rota atual deve ser considerada "ativa" para alem de match exato. */
   matchPrefix?: boolean;
+  /** Produto ainda nao existe — aparece no menu (pra mostrar o que vem por ai) mas nao navega pra lugar nenhum. */
+  disabled?: boolean;
 }
 
 const COLLAPSE_STORAGE_KEY = "wecare-portal-sidebar-collapsed";
@@ -71,6 +73,10 @@ export function Sidebar({
     .map((part) => part[0]?.toUpperCase())
     .join("");
 
+  // "W1 - Eduarda Martins" -> "Eduarda Martins": o quadro de foto mostra o
+  // nome da pessoa, o codigo W ja aparece no rodape junto do cargo.
+  const displayName = userName.replace(/^W\d+\s*-\s*/i, "");
+
   function isActive(item: SidebarNavItem) {
     if (item.external) return false;
     if (item.matchPrefix) return pathname.startsWith(item.href);
@@ -91,6 +97,21 @@ export function Sidebar({
         {!collapsed && <span className="truncate text-sm font-bold tracking-wide text-foreground">WeCare Portal</span>}
       </div>
 
+      {!collapsed && (
+        <div className="flex flex-col items-center gap-2 px-4 pb-5">
+          {/* Foto da funcionaria — por enquanto so as iniciais (sem upload
+              ainda). Proporcao 3x4 (retrato), com moldura dupla discreta
+              (linha dourada por fora, linha clara por dentro) pra um
+              acabamento mais "quadro na parede" do que avatar de app. */}
+          <div className="flex h-32 w-24 items-center justify-center rounded-md border border-[#c9a227]/40 bg-gradient-to-br from-[#f06478] to-[#b0102f] p-[3px] shadow-[0_6px_16px_-4px_rgba(196,18,48,0.45)]">
+            <div className="flex h-full w-full items-center justify-center rounded-[3px] border border-white/15 text-2xl font-bold text-white">
+              {initials || "?"}
+            </div>
+          </div>
+          <span className="max-w-[96px] truncate text-xs font-semibold text-foreground">{displayName}</span>
+        </div>
+      )}
+
       <nav className="flex-1 space-y-1 px-2">
         {navItems.map((item) => {
           const active = isActive(item);
@@ -106,6 +127,26 @@ export function Sidebar({
               ? "bg-gradient-to-r from-primary/15 to-transparent text-foreground"
               : "text-muted hover:bg-surface-2 hover:text-foreground",
           ].join(" ");
+
+          if (item.disabled) {
+            return (
+              <span
+                key={item.href}
+                className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted/50"
+                title={collapsed ? `${item.label} (em breve)` : undefined}
+              >
+                <span className="text-muted/50">{item.icon}</span>
+                {!collapsed && (
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="truncate">{item.label}</span>
+                    <span className="shrink-0 rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted">
+                      Em breve
+                    </span>
+                  </span>
+                )}
+              </span>
+            );
+          }
 
           return item.external ? (
             <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer" className={className} title={collapsed ? item.label : undefined}>

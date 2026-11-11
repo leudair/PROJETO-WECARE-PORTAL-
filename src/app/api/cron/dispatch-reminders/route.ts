@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
-import { sendWhatsAppText } from "@/lib/zapi/client";
+import { getEmployeeTelegramChatId, sendTelegramMessage } from "@/lib/telegram/client";
 import {
   buildReminderText,
   claimDispatch,
@@ -50,12 +50,11 @@ const MAX_DISPATCHES_PER_RUN = 8;
 const GAP_SECONDS = 4; // dentro do lote, so pra nao virar rajada
 
 // TETO POR FUNCIONARIO, POR DIA
-// Cada lembrete e' uma mensagem de WhatsApp separada na mao do funcionario.
-// Sem teto, um acumulo de pendencia viraria dezenas de mensagens na mesma
-// manha pra mesma pessoa — inutil pra quem recebe e um bom jeito de ter a
-// instancia da Z-API bloqueada por comportamento de spam. O que passar do
-// teto fica pendente e entra nos dias seguintes (o mais atrasado primeiro,
-// ver a ordenacao em getDueContacts).
+// Cada lembrete e' uma mensagem separada na mao do funcionario. Sem teto, um
+// acumulo de pendencia viraria dezenas de mensagens na mesma manha pra mesma
+// pessoa — inutil pra quem recebe. O que passar do teto fica pendente e entra
+// nos dias seguintes (o mais atrasado primeiro, ver a ordenacao em
+// getDueContacts).
 const MAX_DISPATCHES_PER_EMPLOYEE_PER_DAY = 20;
 
 function sleep(ms: number) {
@@ -148,6 +147,10 @@ export async function GET(request: NextRequest) {
   const results: { contactId: string; status: DispatchStatus }[] = [];
   let dispatchCount = 0;
 
+  // Varios contatos pendentes caem no mesmo funcionario — uma busca de
+  // chat_id por funcionario em todo o lote, nao uma por contato.
+  const chatIdByEmployee = new Map<string, number | null>();
+
   for (const contact of eligible) {
     if (dispatchCount >= targetThisRun) break;
 
@@ -165,8 +168,7 @@ export async function GET(request: NextRequest) {
     // Tudo daqui pra baixo e' por contato e nunca pode derrubar a rodada
     // inteira — um contato com problema nao deve impedir os outros de sair.
     try {
-      const owner = (contact as unknown as { profiles: { whatsapp_number: string } | null })
-        .profiles;
+      const owner = (contact as unknown as { profiles: { full_name: string } | null }).profiles;
 
       // Reserva ANTES de enviar: e' isso que impede duas execucoes
       // simultaneas de mandarem o mesmo lembrete duas vezes.
@@ -181,10 +183,23 @@ export async function GET(request: NextRequest) {
         continue;
       }
 
-      if (!owner?.whatsapp_number) {
+      if (!owner?.full_name) {
         await markDispatchFailed(claim.dispatchId);
         results.push({ contactId: contact.id, status: "failed" });
-        console.error(`Contato ${contact.id}: funcionario sem whatsapp_number cadastrado.`);
+        console.error(`Contato ${contact.id}: funcionario sem nome cadastrado.`);
+        continue;
+      }
+
+      let chatId = chatIdByEmployee.get(contact.owner_id);
+      if (chatId === undefined) {
+        chatId = await getEmployeeTelegramChatId(owner.full_name);
+        chatIdByEmployee.set(contact.owner_id, chatId);
+      }
+
+      if (!chatId) {
+        await markDispatchFailed(claim.dispatchId);
+        results.push({ contactId: contact.id, status: "failed" });
+        console.error(`Contato ${contact.id}: funcionaria (${owner.full_name}) ainda nao registrou o Telegram.`);
         continue;
       }
 
@@ -198,8 +213,10 @@ export async function GET(request: NextRequest) {
       const text = buildReminderText(contact, templateBody, claim.confirmationCode);
 
       try {
-        const { zapiMessageId } = await sendWhatsAppText(owner.whatsapp_number, text);
-        await markDispatchSent(claim.dispatchId, zapiMessageId);
+        await sendTelegramMessage(chatId, text);
+        // Sem equivalente ao zapiMessageId (era usado so pra correlacionar
+        // reply por citacao na Z-API) — a confirmacao aqui e' so pelo codigo.
+        await markDispatchSent(claim.dispatchId, null);
         // Sai da frente da fila: volta amanha, atras de quem esta mais
         // atrasado. Sem isso a fila trava nos mesmos contatos (ver
         // deferContactToNextDay).

@@ -319,6 +319,11 @@ export const UpdateEmployeeSchema = z.object({
     .regex(/^\+[1-9]\d{7,14}$/, "Use o formato internacional, ex: +5511999999999"),
   role: z.enum(["employee", "manager", "financeiro"]),
   password: PasswordSchema.optional().or(z.literal("").transform(() => undefined)),
+  monthlyGoal: z.coerce
+    .number()
+    .min(0, "Meta não pode ser negativa.")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
 });
 
 export async function updateEmployee(input: z.infer<typeof UpdateEmployeeSchema>) {
@@ -342,7 +347,12 @@ export async function updateEmployee(input: z.infer<typeof UpdateEmployeeSchema>
 
   const { error: profileError } = await admin
     .from("profiles")
-    .update({ full_name: input.fullName, whatsapp_number: input.whatsappNumber, role: input.role })
+    .update({
+      full_name: input.fullName,
+      whatsapp_number: input.whatsappNumber,
+      role: input.role,
+      monthly_goal: input.monthlyGoal ?? null,
+    })
     .eq("id", input.employeeId);
 
   if (profileError) throw profileError;

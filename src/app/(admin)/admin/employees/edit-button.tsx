@@ -9,6 +9,7 @@ export function EditEmployeeButton({
   email,
   whatsappNumber,
   role,
+  monthlyGoal,
   canSetElevatedRole,
 }: {
   employeeId: string;
@@ -16,6 +17,7 @@ export function EditEmployeeButton({
   email: string;
   whatsappNumber: string;
   role: string;
+  monthlyGoal: number | null;
   canSetElevatedRole: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -75,6 +77,19 @@ export function EditEmployeeButton({
           {canSetElevatedRole && <option value="manager">Gerente</option>}
           {canSetElevatedRole && <option value="financeiro">Financeiro</option>}
         </select>
+      </div>
+
+      <div className="space-y-0.5">
+        <label className="text-[10px] uppercase text-muted">Meta mensal (R$, opcional)</label>
+        <input
+          type="number"
+          name="monthlyGoal"
+          min="0"
+          step="0.01"
+          defaultValue={monthlyGoal ?? ""}
+          placeholder="Sem meta definida"
+          className="w-full rounded-md border border-border px-2 py-1 text-xs"
+        />
       </div>
 
       <div className="space-y-0.5">
