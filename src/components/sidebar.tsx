@@ -13,6 +13,8 @@ export interface SidebarNavItem {
   external?: boolean;
   /** Quando a rota atual deve ser considerada "ativa" para alem de match exato. */
   matchPrefix?: boolean;
+  /** Produto ainda nao existe — aparece no menu (pra mostrar o que vem por ai) mas nao navega pra lugar nenhum. */
+  disabled?: boolean;
 }
 
 const COLLAPSE_STORAGE_KEY = "wecare-portal-sidebar-collapsed";
@@ -106,6 +108,26 @@ export function Sidebar({
               ? "bg-gradient-to-r from-primary/15 to-transparent text-foreground"
               : "text-muted hover:bg-surface-2 hover:text-foreground",
           ].join(" ");
+
+          if (item.disabled) {
+            return (
+              <span
+                key={item.href}
+                className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted/50"
+                title={collapsed ? `${item.label} (em breve)` : undefined}
+              >
+                <span className="text-muted/50">{item.icon}</span>
+                {!collapsed && (
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="truncate">{item.label}</span>
+                    <span className="shrink-0 rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted">
+                      Em breve
+                    </span>
+                  </span>
+                )}
+              </span>
+            );
+          }
 
           return item.external ? (
             <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer" className={className} title={collapsed ? item.label : undefined}>

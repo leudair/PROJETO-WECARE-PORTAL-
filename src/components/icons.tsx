@@ -77,6 +77,36 @@ export function SiteIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function CrmIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="4" width="18" height="14" rx="2" />
+      <path d="M3 9h18" />
+      <circle cx="8" cy="13.5" r="1.5" />
+      <path d="M13 12.5h5M13 15h3.5" />
+    </Icon>
+  );
+}
+
+export function AiIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
+      <path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
+    </Icon>
+  );
+}
+
+export function BuildingIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <rect x="4" y="3" width="11" height="18" rx="1" />
+      <rect x="15" y="9" width="5" height="12" rx="1" />
+      <path d="M7.5 7h1M11 7h1M7.5 11h1M11 11h1M7.5 15h1M11 15h1" />
+    </Icon>
+  );
+}
+
 export function SettingsIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
