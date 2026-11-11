@@ -1,9 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { addContact } from "./actions";
 
 const STAGES = [2, 3, 4, 5, 6];
+
+const inputClass =
+  "w-full rounded-lg border border-border bg-surface-2 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary";
 
 function todayPlus(days: number) {
   const d = new Date();
@@ -11,42 +14,31 @@ function todayPlus(days: number) {
   return d.toISOString().slice(0, 10);
 }
 
-export function ContactForm() {
+export function ContactForm({ onSaved }: { onSaved?: () => void }) {
   const [state, formAction, pending] = useActionState(addContact, undefined);
   const [contactType, setContactType] = useState<"cliente" | "lead">("cliente");
   const [nextContactDate, setNextContactDate] = useState(todayPlus(5));
 
-  return (
-    <form action={formAction} className="card-glass space-y-4 p-6">
-      <h2 className="text-sm font-bold text-foreground">Novo lembrete de contato</h2>
+  useEffect(() => {
+    if (state?.success) onSaved?.();
+  }, [state?.success, onSaved]);
 
+  return (
+    <form action={formAction} className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground">Nome do cliente</label>
-          <input
-            name="name"
-            required
-            className="w-full rounded-md border border-border px-3 py-2 text-sm"
-          />
+          <input name="name" required className={inputClass} />
         </div>
         <div className="space-y-1">
           <label className="text-xs font-medium text-foreground">@ do perfil (opcional)</label>
-          <input
-            name="instagramHandle"
-            placeholder="usuario"
-            className="w-full rounded-md border border-border px-3 py-2 text-sm"
-          />
+          <input name="instagramHandle" placeholder="usuario" className={inputClass} />
         </div>
       </div>
 
       <div className="space-y-1">
         <label className="text-xs font-medium text-foreground">Telefone (com código do país)</label>
-        <input
-          name="phone"
-          required
-          placeholder="+5511999999999"
-          className="w-full rounded-md border border-border px-3 py-2 text-sm"
-        />
+        <input name="phone" required placeholder="+5511999999999" className={inputClass} />
       </div>
 
       <div className="space-y-1">
@@ -86,7 +78,7 @@ export function ContactForm() {
               min="0"
               step="0.01"
               placeholder="0,00"
-              className="w-32 rounded-md border border-border px-3 py-2 text-sm"
+              className={`w-32 ${inputClass}`}
             />
           </div>
           <p className="text-xs text-muted">Ajuda a decidir um pacote maior na hora de reengajar.</p>
@@ -97,12 +89,7 @@ export function ContactForm() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-1">
             <label className="text-xs font-medium text-foreground">Qual tentativa é essa?</label>
-            <select
-              name="attemptStage"
-              required
-              defaultValue=""
-              className="w-full rounded-md border border-border px-3 py-2 text-sm"
-            >
+            <select name="attemptStage" required defaultValue="" className={inputClass}>
               <option value="" disabled>
                 Selecione
               </option>
@@ -123,7 +110,7 @@ export function ContactForm() {
                 min="0"
                 step="0.01"
                 placeholder="50,00 (padrão)"
-                className="w-32 rounded-md border border-border px-3 py-2 text-sm"
+                className={`w-32 ${inputClass}`}
               />
             </div>
             <p className="text-xs text-muted">Se o lead não citou valor, deixe em branco (assume R$ 50).</p>
@@ -133,14 +120,14 @@ export function ContactForm() {
 
       <div className="space-y-1">
         <label className="text-xs font-medium text-foreground">Entrar em contato em</label>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <input
             type="date"
             name="nextContactDate"
             value={nextContactDate}
             onChange={(e) => setNextContactDate(e.target.value)}
             required
-            className="rounded-md border border-border px-3 py-2 text-sm"
+            className={`w-auto ${inputClass}`}
           />
           <div className="flex gap-1 text-xs">
             {[5, 15, 30].map((days) => (
@@ -157,12 +144,12 @@ export function ContactForm() {
         </div>
       </div>
 
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p className="text-sm text-red-400">{state.error}</p>}
 
       <button
         type="submit"
         disabled={pending}
-        className="btn-glossy rounded-lg px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
+        className="btn-glossy w-full rounded-lg px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50 sm:w-auto"
       >
         {pending ? "Salvando..." : "Salvar lembrete"}
       </button>
