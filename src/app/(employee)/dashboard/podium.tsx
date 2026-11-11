@@ -24,7 +24,7 @@ export async function Podium() {
 
   return (
     <div>
-      <h2 className="mb-1 text-sm font-semibold text-foreground">Pódio da semana</h2>
+      <h2 className="mb-1 text-sm font-bold text-foreground">Pódio da semana</h2>
       <p className="mb-3 text-xs text-muted">
         Faturamento oficial lançado pelo Financeiro · semana de{" "}
         {formatWeekRange(leaderboard[0].week_start_date, leaderboard[0].week_end_date)}. Vendas
@@ -33,19 +33,16 @@ export async function Podium() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {top3.map((row, i) => (
-          <div
-            key={row.employee_id}
-            className="rounded-xl border border-border bg-surface p-4 text-center"
-          >
+          <div key={row.employee_id} className="card-glass p-5 text-center">
             <div className="text-3xl">{MEDALS[i]}</div>
-            <div className="mt-1 font-semibold text-foreground">{row.full_name}</div>
+            <div className="mt-1 font-bold text-foreground">{row.full_name}</div>
             <div className="text-lg font-bold text-primary">{formatCurrency(row.faturamento)}</div>
           </div>
         ))}
       </div>
 
       {rest.length > 0 && (
-        <div className="mt-3 overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="card-glass mt-3 overflow-hidden">
           <table className="w-full text-sm">
             <tbody>
               {rest.map((row, i) => (

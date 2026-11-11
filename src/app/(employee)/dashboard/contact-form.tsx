@@ -17,8 +17,8 @@ export function ContactForm() {
   const [nextContactDate, setNextContactDate] = useState(todayPlus(5));
 
   return (
-    <form action={formAction} className="space-y-4 rounded-xl border border-border bg-surface p-6">
-      <h2 className="text-sm font-semibold text-foreground">Novo lembrete de contato</h2>
+    <form action={formAction} className="card-glass space-y-4 p-6">
+      <h2 className="text-sm font-bold text-foreground">Novo lembrete de contato</h2>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-1">
@@ -162,7 +162,7 @@ export function ContactForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        className="btn-glossy rounded-lg px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-50"
       >
         {pending ? "Salvando..." : "Salvar lembrete"}
       </button>
