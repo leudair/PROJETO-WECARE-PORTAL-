@@ -93,6 +93,17 @@ export function Sidebar({
         {!collapsed && <span className="truncate text-sm font-bold tracking-wide text-foreground">WeCare Portal</span>}
       </div>
 
+      {!collapsed && (
+        <div className="px-4 pb-4">
+          {/* Foto da funcionaria — por enquanto so as iniciais (sem upload
+              ainda); o quadrado (em vez do circulo do rodape) e' de proposito,
+              pra diferenciar essa "foto de perfil" do avatarzinho pequeno. */}
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f06478] to-[#b0102f] text-lg font-bold text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),0_6px_16px_-4px_rgba(196,18,48,0.55)]">
+            {initials || "?"}
+          </div>
+        </div>
+      )}
+
       <nav className="flex-1 space-y-1 px-2">
         {navItems.map((item) => {
           const active = isActive(item);
