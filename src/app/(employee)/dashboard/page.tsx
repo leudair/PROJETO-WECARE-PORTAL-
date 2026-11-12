@@ -1,16 +1,25 @@
 import { listOwnContactDateSummaries } from "@/lib/data/contacts";
 import { todayInSaoPaulo } from "@/lib/date";
+import { requireProfile } from "@/lib/data/auth";
+import { lembretesTelegram } from "@/lib/data/portal";
+import { TelegramLembretes } from "@/components/telegram-lembretes";
 import { ContactForm } from "./contact-form";
 import { DateJump } from "./date-jump";
 import { DateList } from "./date-list";
 import { Podium } from "./podium";
 
 export default async function DashboardPage() {
-  const dateSummaries = await listOwnContactDateSummaries();
+  const profile = await requireProfile();
+  const [dateSummaries, telegram] = await Promise.all([
+    listOwnContactDateSummaries(),
+    lembretesTelegram(profile.id, 30, 100),
+  ]);
 
   return (
     <div className="space-y-8">
       <ContactForm />
+
+      {telegram && <TelegramLembretes dados={telegram} mostrarLista />}
 
       <div>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
