@@ -25,11 +25,14 @@ export function Sidebar({
   userName,
   roleLabel,
   logoutAction,
+  profileHref,
 }: {
   navItems: SidebarNavItem[];
   userName: string;
   roleLabel: string;
   logoutAction: () => void | Promise<void>;
+  /** Se informado, o cartao do usuario (nome + cargo) vira botao para essa rota. */
+  profileHref?: string;
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -123,15 +126,30 @@ export function Sidebar({
       </nav>
 
       <div className="mt-auto space-y-2 border-t border-border p-3">
-        <div className="flex items-center gap-2.5 overflow-hidden">
-          <span className="icon-orb h-8 w-8 shrink-0 text-xs font-bold text-white">{initials || "?"}</span>
-          {!collapsed && (
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-foreground">{userName}</p>
-              <p className="truncate text-xs text-muted">{roleLabel}</p>
-            </div>
-          )}
-        </div>
+        {(() => {
+          const cartao = (
+            <>
+              <span className="icon-orb h-8 w-8 shrink-0 text-xs font-bold text-white">{initials || "?"}</span>
+              {!collapsed && (
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{userName}</p>
+                  <p className="truncate text-xs text-muted">{profileHref ? `${roleLabel} · ver equipe` : roleLabel}</p>
+                </div>
+              )}
+            </>
+          );
+          return profileHref ? (
+            <Link
+              href={profileHref}
+              className="flex items-center gap-2.5 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-b from-white/10 to-white/[0.03] px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.15)] backdrop-blur transition hover:-translate-y-0.5 hover:border-primary/50"
+              title="Ver todas as funcionárias"
+            >
+              {cartao}
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2.5 overflow-hidden">{cartao}</div>
+          );
+        })()}
         <form action={logoutAction}>
           <button
             type="submit"
