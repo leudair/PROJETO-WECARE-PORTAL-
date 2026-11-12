@@ -76,3 +76,6 @@ select cron.schedule(
   '0 12-21 * * 1-6',
   $$select public.portal_enfileirar_lembretes_telegram()$$
 );
+
+-- Disparo dos cards a cada minuto (ate 15 por vendedora por rodada, 1 por segundo).
+select cron.alter_job((select jobid from cron.job where jobname = 'telegram-lembretes-disparo'), schedule := '* * * * *');
