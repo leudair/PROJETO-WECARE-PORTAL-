@@ -10,6 +10,9 @@ create or replace view public.telegram_relatorio_lembretes
 with (security_invoker = true) as
 select
   l.id,
+  l.funcionario_id,
+  'telegram'::text            as origem,
+  l.status,
   f.codigo                     as vendedora_codigo,
   f.nome                       as vendedora,
   f.telefone                   as vendedora_telefone,
@@ -58,5 +61,6 @@ group by 1,2,3,4;
 
 -- 4) Segurança: só o servidor (bot e Portal com chave de serviço) lê esses dados
 alter table public.telegram_lembretes enable row level security;
+alter table public.telegram_cadastro_pendente enable row level security;
 revoke all on public.telegram_relatorio_lembretes from anon, authenticated;
 revoke all on public.telegram_relatorio_mensal from anon, authenticated;
