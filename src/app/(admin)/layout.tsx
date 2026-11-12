@@ -1,7 +1,7 @@
 import { requireAdmin } from "@/lib/data/auth";
 import { logout } from "@/app/logout-action";
 import { Sidebar, type SidebarNavItem } from "@/components/sidebar";
-import { OverviewIcon, EmployeesIcon, FinanceIcon, RadarIcon } from "@/components/icons";
+import { OverviewIcon, EmployeesIcon, FinanceIcon, RadarIcon, SettingsIcon, BellIcon } from "@/components/icons";
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "CEO",
@@ -13,8 +13,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const navItems: SidebarNavItem[] = [
     { href: "/admin", label: "Visão geral", icon: <OverviewIcon className="h-5 w-5" /> },
+    { href: "/admin/equipe", label: "Equipe hoje", icon: <BellIcon className="h-5 w-5" />, matchPrefix: true },
     { href: "/financeiro", label: "Financeiro", icon: <FinanceIcon className="h-5 w-5" />, matchPrefix: true },
     { href: "/admin/employees", label: "Funcionários", icon: <EmployeesIcon className="h-5 w-5" /> },
+    { href: "/admin/meu-codigo", label: "Meu código", icon: <SettingsIcon className="h-5 w-5" /> },
     // "Mensagens" (funil de lead) em stand-by — pedido pra tirar do menu sem
     // apagar a tela/dados, pra religar depois se decidirem usar.
     { href: "https://radar.portalwecare.com.br", label: "Radar", icon: <RadarIcon className="h-5 w-5" />, external: true },

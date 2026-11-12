@@ -131,3 +131,79 @@ body {
     radial-gradient(640px 420px at 85% -5%, color-mix(in oklab, var(--wecare-red) 16%, transparent) 0%, transparent 70%),
     radial-gradient(520px 360px at -5% 60%, color-mix(in oklab, var(--wecare-gold) 8%, transparent) 0%, transparent 70%);
 }
+
+/* ---- Botoes "vidro" (pilula translucida com brilho), estilo pedido pelo CEO ---- */
+.btn-vidro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--foreground);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    0 8px 24px -10px rgba(0, 0, 0, 0.7);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.btn-vidro:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 100%);
+}
+.btn-vidro-ativo {
+  color: #fff;
+  border-color: color-mix(in oklab, var(--wecare-red-light) 70%, white);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--wecare-red-light) 85%, white) 0%, var(--wecare-red) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 0 1px rgba(196, 18, 48, 0.35),
+    0 10px 30px -8px rgba(196, 18, 48, 0.7);
+}
+
+/* Barra de abas em vidro (grupo de botoes dentro de uma pilula) */
+.barra-vidro {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  padding: 0.3rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 10px 30px -14px rgba(0, 0, 0, 0.8);
+}
+.barra-vidro > a,
+.barra-vidro > button {
+  border-radius: 9999px;
+  padding: 0.45rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.barra-vidro > a:hover,
+.barra-vidro > button:hover {
+  color: var(--foreground);
+}
+.barra-vidro > .ativo {
+  color: #fff;
+  background: linear-gradient(180deg, var(--wecare-red-light) 0%, var(--wecare-red) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 6px 18px -6px rgba(196, 18, 48, 0.7);
+}
+
+/* Bolinha de status (verde aberto, cinza fechado, vermelho nao abriu) */
+.ponto-status {
+  display: inline-block;
+  height: 0.6rem;
+  width: 0.6rem;
+  border-radius: 9999px;
+  box-shadow: 0 0 10px currentColor;
+}
