@@ -47,7 +47,7 @@ export function AssinaturaForm({
           pattern="\d{4,8}"
           required
           placeholder="Seu código"
-          className="w-36 rounded-full border border-border bg-surface-2 px-4 py-2 text-center text-sm tracking-[0.3em] text-foreground"
+          className="w-36 rounded-full border border-border bg-surface-2 px-4 py-2 text-center text-sm tracking-[0.3em] text-foreground placeholder:tracking-normal"
         />
         <button type="submit" disabled={pending} className="btn-vidro btn-vidro-ativo disabled:opacity-50">
           {pending ? "Conferindo..." : botao}
@@ -66,7 +66,7 @@ export function CriarCodigoForm({ action, trocar }: { action: Action; trocar?: b
   }
 
   const campo =
-    "w-full rounded-full border border-border bg-surface-2 px-4 py-2 text-center text-sm tracking-[0.3em] text-foreground";
+    "w-full rounded-full border border-border bg-surface-2 px-4 py-2 text-center text-sm tracking-[0.3em] text-foreground placeholder:tracking-normal";
 
   return (
     <form action={formAction} className="mx-auto max-w-xs space-y-3">
