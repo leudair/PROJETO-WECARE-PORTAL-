@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import type { Database, PortalResumo } from "@/lib/supabase/database.types";
+import type { ContagemCores, ContatoCor, CorContato, Database, PortalResumo } from "@/lib/supabase/database.types";
 import { todayInSaoPaulo } from "@/lib/date";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -134,4 +134,36 @@ export function formatarHora(iso: string | null | undefined): string {
 
 export function formatarMoeda(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+export const CORES: { cor: CorContato; label: string; descricao: string; classe: string }[] = [
+  { cor: "verde", label: "Fiéis", descricao: "Compraram 2 vezes ou mais", classe: "text-green-400" },
+  { cor: "azul", label: "Compraram e sumiram", descricao: "Uma compra só, reativar", classe: "text-sky-400" },
+  { cor: "amarelo", label: "Engajados", descricao: "Conversaram e não compraram", classe: "text-yellow-400" },
+  { cor: "cinza", label: "Sumiram", descricao: "Responderam e sumiram, oferecer preço", classe: "text-zinc-400" },
+];
+
+// null = funcao do banco ainda nao existe (migration 0013 nao aplicada).
+export async function contagemCores(profileId: string): Promise<ContagemCores | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("portal_contatos_por_cor", { p_profile: profileId });
+  if (error) return null;
+  return data;
+}
+
+export async function listaContatosCor(profileId: string, cor: CorContato, limite = 100): Promise<ContatoCor[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("portal_lista_contatos_cor", { p_profile: profileId, p_cor: cor, p_limite: limite });
+  return data ?? [];
+}
+
+export async function vendedoras(): Promise<Profile[]> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("profiles").select("*").eq("role", "employee").order("full_name");
+  // Ordem W1, W2, ... W11 pelo numero, nao alfabetica.
+  return (data ?? []).sort((a, b) => {
+    const na = Number(a.full_name.match(/^W(\d+)/i)?.[1] ?? 999);
+    const nb = Number(b.full_name.match(/^W(\d+)/i)?.[1] ?? 999);
+    return na - nb || a.full_name.localeCompare(b.full_name);
+  });
 }

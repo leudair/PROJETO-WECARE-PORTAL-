@@ -63,6 +63,9 @@ export default async function FichaVendedoraPage({
             <Link href={`/admin/funcionario/${id}`} className="btn-vidro">
               Lembretes e clientes
             </Link>
+            <Link href={`/admin/contatos?v=${id}`} className="btn-vidro">
+              Contatos por cor
+            </Link>
             {siteUrl && (
               <a href={siteUrl} target="_blank" rel="noreferrer" className="btn-vidro">
                 Site dela

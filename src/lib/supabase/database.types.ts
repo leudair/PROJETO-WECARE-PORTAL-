@@ -22,6 +22,19 @@ export interface PortalResumo {
   codigo_w: string | null;
 }
 
+export type CorContato = "verde" | "azul" | "amarelo" | "cinza";
+export type ContagemCores = Record<CorContato, number>;
+export interface ContatoCor {
+  telefone: string;
+  nome: string | null;
+  cor: CorContato;
+  qtd_compras: number | null;
+  valor_estimado: number | null;
+  data_compra: string | null;
+  ultima_msg_cliente: string | null;
+  motivo: string | null;
+}
+
 export type ProfileRole = "employee" | "admin" | "manager" | "financeiro";
 
 export interface Database {
@@ -305,6 +318,11 @@ export interface Database {
         Returns: string;
       };
       portal_registrar_ver_como: { Args: { p_alvo: string }; Returns: undefined };
+      portal_contatos_por_cor: { Args: { p_profile: string }; Returns: ContagemCores };
+      portal_lista_contatos_cor: {
+        Args: { p_profile: string; p_cor: string; p_limite?: number };
+        Returns: ContatoCor[];
+      };
       portal_resumo_vendedora: { Args: { p_profile: string; p_de: string; p_ate: string }; Returns: PortalResumo };
       get_weekly_leaderboard: {
         Args: Record<PropertyKey, never>;

@@ -1,14 +1,43 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
-import { formatarHora, relatoriosPendentesGerente, statusDaEquipeHoje } from "@/lib/data/portal";
+import { formatarHora, formatarMoeda, relatoriosPendentesGerente, resumoVendedora, statusDaEquipeHoje } from "@/lib/data/portal";
+import { addDays, todayInSaoPaulo } from "@/lib/date";
+import { StatCard } from "@/components/stat-card";
+
+const PERIODOS = [
+  { chave: "hoje", label: "Hoje", dias: 0 },
+  { chave: "7", label: "7 dias", dias: 6 },
+  { chave: "30", label: "30 dias", dias: 29 },
+] as const;
 
 function codigoW(nome: string) {
   return nome.match(/^W\d+/i)?.[0]?.toUpperCase() ?? nome.slice(0, 2).toUpperCase();
 }
 
-export default async function EquipePage() {
+export default async function EquipePage({ searchParams }: { searchParams: Promise<{ periodo?: string }> }) {
+  const { periodo: periodoParam } = await searchParams;
+  const periodo = PERIODOS.find((p) => p.chave === periodoParam) ?? PERIODOS[0];
+  const ate = todayInSaoPaulo();
+  const de = addDays(ate, -periodo.dias);
+
   const [equipe, pendentes] = await Promise.all([statusDaEquipeHoje(), relatoriosPendentesGerente()]);
   const abertas = equipe.filter((e) => e.expediente).length;
+
+  // Ranking: numeros de cada vendedora no periodo (Portal + site).
+  const resumos = await Promise.all(equipe.map((e) => resumoVendedora(e.profile.id, de, ate)));
+  const ranking = equipe
+    .map((e, i) => {
+      const r = resumos[i];
+      const qtd = (r?.vendas_portal_qtd ?? 0) + (r?.site_vendas_qtd ?? 0);
+      const valor = Number(r?.vendas_portal_valor ?? 0) + Number(r?.site_vendas_valor ?? 0);
+      const enviados = r?.disparos_enviados ?? 0;
+      const taxa = enviados > 0 ? Math.round(((r?.disparos_respondidos ?? 0) / enviados) * 100) : 0;
+      return { nome: e.profile.full_name, id: e.profile.id, qtd, valor, taxa };
+    })
+    .sort((a, b) => b.valor - a.valor || b.qtd - a.qtd);
+  const totalQtd = ranking.reduce((s, r) => s + r.qtd, 0);
+  const totalValor = ranking.reduce((s, r) => s + r.valor, 0);
+  const temDados = resumos.some(Boolean);
 
   return (
     <div className="space-y-6">
@@ -51,6 +80,47 @@ export default async function EquipePage() {
             </Link>
           );
         })}
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-bold text-foreground">Ranking de vendas</h2>
+          <nav className="barra-vidro">
+            {PERIODOS.map((p) => (
+              <Link key={p.chave} href={`?periodo=${p.chave}`} className={p.chave === periodo.chave ? "ativo" : ""}>
+                {p.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        {!temDados ? (
+          <div className="card-glass p-5 text-sm text-muted">
+            O ranking aparece assim que a atualização do banco for aplicada.
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+              <StatCard label="Faturamento da equipe" value={formatarMoeda(totalValor)} variant={totalValor > 0 ? "positive" : "neutral"} />
+              <StatCard label="Vendas" value={String(totalQtd)} />
+              <StatCard label="Ticket médio" value={totalQtd > 0 ? formatarMoeda(totalValor / totalQtd) : "—"} />
+            </div>
+            <div className="card-glass p-5">
+              <ol className="divide-y divide-border">
+                {ranking.map((r, i) => (
+                  <li key={r.id} className="flex items-center gap-3 py-2.5 text-sm">
+                    <span className={`w-6 text-center font-bold tabular-nums ${i < 3 ? "text-gold" : "text-muted"}`}>{i + 1}º</span>
+                    <Link href={`/admin/equipe/${r.id}`} className="min-w-0 flex-1 truncate text-foreground hover:text-primary">
+                      {r.nome}
+                    </Link>
+                    <span className="hidden text-xs text-muted sm:inline">resposta {r.taxa}%</span>
+                    <span className="w-16 text-right tabular-nums text-muted">{r.qtd} vend.</span>
+                    <span className="w-28 text-right font-semibold tabular-nums text-foreground">{formatarMoeda(r.valor)}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="card-glass p-5">

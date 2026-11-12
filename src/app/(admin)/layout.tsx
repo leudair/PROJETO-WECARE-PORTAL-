@@ -14,6 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const navItems: SidebarNavItem[] = [
     { href: "/admin", label: "Visão geral", icon: <OverviewIcon className="h-5 w-5" /> },
     { href: "/admin/equipe", label: "Equipe hoje", icon: <BellIcon className="h-5 w-5" />, matchPrefix: true },
+    { href: "/admin/contatos", label: "Contatos", icon: <EmployeesIcon className="h-5 w-5" /> },
     { href: "/financeiro", label: "Financeiro", icon: <FinanceIcon className="h-5 w-5" />, matchPrefix: true },
     { href: "/admin/employees", label: "Funcionários", icon: <EmployeesIcon className="h-5 w-5" /> },
     { href: "/admin/meu-codigo", label: "Meu código", icon: <SettingsIcon className="h-5 w-5" /> },
