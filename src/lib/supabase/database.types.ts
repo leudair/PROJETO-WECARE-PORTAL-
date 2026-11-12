@@ -2,6 +2,32 @@
 // Assim que o projeto Supabase existir, substituir por:
 //   npx supabase gen types typescript --project-id <id> > src/lib/supabase/database.types.ts
 
+export interface LembreteTelegramItem {
+  id: number;
+  cliente_nome: string | null;
+  cliente_telefone: string;
+  contato_data: string | null;
+  status: string;
+  enviado_em: string | null;
+  aberto_em: string | null;
+  cliques: number;
+  confirmado_em: string | null;
+  resultado: "chamei" | "nao_consegui" | null;
+}
+
+export interface LembretesTelegram {
+  no_telegram: boolean;
+  na_fila: number;
+  recebidos: number;
+  recebidos_hoje: number;
+  abertos: number;
+  chamados: number;
+  chamados_hoje: number;
+  nao_conseguiu: number;
+  sem_resposta: number;
+  lista: LembreteTelegramItem[];
+}
+
 export type ContactType = "cliente" | "lead";
 export type ContactStatus = "pending" | "done";
 export type DispatchStatus = "scheduled" | "sent" | "replied" | "failed";
@@ -322,6 +348,10 @@ export interface Database {
       portal_lista_contatos_cor: {
         Args: { p_profile: string; p_cor: string; p_limite?: number };
         Returns: ContatoCor[];
+      };
+      portal_lembretes_telegram: {
+        Args: { p_profile: string; p_dias?: number; p_limite?: number };
+        Returns: LembretesTelegram | null;
       };
       portal_resumo_vendedora: { Args: { p_profile: string; p_de: string; p_ate: string }; Returns: PortalResumo };
       get_weekly_leaderboard: {

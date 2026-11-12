@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import type { ContagemCores, ContatoCor, CorContato, Database, PortalResumo } from "@/lib/supabase/database.types";
+import type { ContagemCores, ContatoCor, CorContato, Database, LembretesTelegram, PortalResumo } from "@/lib/supabase/database.types";
 import { todayInSaoPaulo } from "@/lib/date";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -166,4 +166,13 @@ export async function vendedoras(): Promise<Profile[]> {
     const nb = Number(b.full_name.match(/^W(\d+)/i)?.[1] ?? 999);
     return na - nb || a.full_name.localeCompare(b.full_name);
   });
+}
+
+// Cards de lembrete do Telegram (recebidos, abertos, "Ja chamei").
+// null = funcao do banco ainda nao existe ou ela nao esta no cadastro do bot.
+export async function lembretesTelegram(profileId: string, dias = 30, limite = 50): Promise<LembretesTelegram | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("portal_lembretes_telegram", { p_profile: profileId, p_dias: dias, p_limite: limite });
+  if (error) return null;
+  return data;
 }

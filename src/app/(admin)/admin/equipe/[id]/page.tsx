@@ -6,10 +6,12 @@ import { getEmployeeSiteUrl } from "@/lib/employee-site";
 import {
   expedientesDaVendedora,
   formatarHora,
+  lembretesTelegram,
   relatoriosDaVendedora,
   resumoVendedora,
 } from "@/lib/data/portal";
 import { ResumoCards } from "@/components/resumo-cards";
+import { TelegramLembretes } from "@/components/telegram-lembretes";
 import { AssinaturaForm } from "@/components/assinatura-form";
 import { gerenteAssinarAction } from "@/lib/actions/assinatura";
 
@@ -41,10 +43,11 @@ export default async function FichaVendedoraPage({
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
   if (!profile) notFound();
 
-  const [resumo, expedientes, relatorios] = await Promise.all([
+  const [resumo, expedientes, relatorios, telegram] = await Promise.all([
     resumoVendedora(id, de, ate),
     expedientesDaVendedora(id, 15),
     relatoriosDaVendedora(id, 15),
+    lembretesTelegram(id, 30, 200),
   ]);
   const siteUrl = getEmployeeSiteUrl(profile.full_name);
 
@@ -90,6 +93,8 @@ export default async function FichaVendedoraPage({
       ) : (
         <p className="text-sm text-muted">Não foi possível carregar os números.</p>
       )}
+
+      {telegram && <TelegramLembretes dados={telegram} mostrarLista />}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="card-glass p-5">
