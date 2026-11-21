@@ -2,9 +2,65 @@
 // Assim que o projeto Supabase existir, substituir por:
 //   npx supabase gen types typescript --project-id <id> > src/lib/supabase/database.types.ts
 
+export interface LembreteTelegramItem {
+  id: number;
+  cliente_nome: string | null;
+  cliente_telefone: string;
+  contato_data: string | null;
+  status: string;
+  enviado_em: string | null;
+  aberto_em: string | null;
+  cliques: number;
+  confirmado_em: string | null;
+  resultado: "chamei" | "nao_consegui" | null;
+}
+
+export interface LembretesTelegram {
+  no_telegram: boolean;
+  na_fila: number;
+  recebidos: number;
+  recebidos_hoje: number;
+  abertos: number;
+  chamados: number;
+  chamados_hoje: number;
+  nao_conseguiu: number;
+  sem_resposta: number;
+  lista: LembreteTelegramItem[];
+}
+
 export type ContactType = "cliente" | "lead";
 export type ContactStatus = "pending" | "done";
 export type DispatchStatus = "scheduled" | "sent" | "replied" | "failed";
+// Resumo por vendedora calculado no banco (portal_resumo_vendedora).
+export interface PortalResumo {
+  lembretes_cadastrados: number;
+  vendas_portal_qtd: number;
+  vendas_portal_valor: number;
+  disparos_enviados: number;
+  disparos_respondidos: number;
+  disparos_falhados: number;
+  site_conversas: number;
+  site_vendas_qtd: number;
+  site_vendas_valor: number;
+  site_cancelados: number;
+  followups_programados: number;
+  followups_pendentes: number;
+  codigo_w: string | null;
+}
+
+export type CorContato = "verde" | "azul" | "amarelo" | "cinza";
+export type ContagemCores = Record<CorContato, number>;
+export interface ContatoCor {
+  telefone: string;
+  nome: string | null;
+  cor: CorContato;
+  qtd_compras: number | null;
+  valor_estimado: number | null;
+  data_compra: string | null;
+  ultima_msg_cliente: string | null;
+  motivo: string | null;
+}
+
 export type ProfileRole = "employee" | "admin" | "manager" | "financeiro";
 
 export interface Database {
@@ -250,9 +306,56 @@ export interface Database {
           },
         ];
       };
+      portal_expediente: {
+        Row: {
+          id: number;
+          profile_id: string;
+          dia: string;
+          aberto_em: string;
+          fechado_em: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      portal_relatorio_dia: {
+        Row: {
+          id: number;
+          profile_id: string;
+          dia: string;
+          resumo: PortalResumo;
+          observacao: string | null;
+          assinado_em: string;
+          gerente_id: string | null;
+          gerente_assinado_em: string | null;
+          gerente_observacao: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
+      portal_tem_codigo: { Args: Record<PropertyKey, never>; Returns: boolean };
+      portal_definir_codigo: { Args: { p_novo: string; p_atual?: string | null }; Returns: string };
+      portal_abrir_dia: { Args: { p_codigo: string }; Returns: string };
+      portal_fechar_dia: { Args: { p_codigo: string; p_observacao?: string | null }; Returns: string };
+      portal_gerente_assinar: {
+        Args: { p_relatorio: number; p_codigo: string; p_observacao?: string | null };
+        Returns: string;
+      };
+      portal_registrar_ver_como: { Args: { p_alvo: string }; Returns: undefined };
+      portal_contatos_por_cor: { Args: { p_profile: string }; Returns: ContagemCores };
+      portal_lista_contatos_cor: {
+        Args: { p_profile: string; p_cor: string; p_limite?: number };
+        Returns: ContatoCor[];
+      };
+      portal_lembretes_telegram: {
+        Args: { p_profile: string; p_dias?: number; p_limite?: number };
+        Returns: LembretesTelegram | null;
+      };
+      portal_resumo_vendedora: { Args: { p_profile: string; p_de: string; p_ate: string }; Returns: PortalResumo };
       get_weekly_leaderboard: {
         Args: Record<PropertyKey, never>;
         Returns: {

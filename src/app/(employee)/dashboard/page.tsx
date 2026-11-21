@@ -1,7 +1,9 @@
-import { getCurrentProfile } from "@/lib/data/auth";
+import { requireProfile } from "@/lib/data/auth";
 import { getOwnSalesHistory, listOwnContactDateSummaries } from "@/lib/data/contacts";
 import { todayInSaoPaulo } from "@/lib/date";
+import { lembretesTelegram } from "@/lib/data/portal";
 import { PageHeader } from "@/components/page-header";
+import { TelegramLembretes } from "@/components/telegram-lembretes";
 import { DateJump } from "./date-jump";
 import { DateList } from "./date-list";
 import { MonthlyGoal } from "./monthly-goal";
@@ -10,9 +12,10 @@ import { NewContactModal } from "./new-contact-modal";
 import { Podium } from "./podium";
 
 export default async function DashboardPage() {
-  const [profile, dateSummaries, salesHistory] = await Promise.all([
-    getCurrentProfile(),
+  const profile = await requireProfile();
+  const [dateSummaries, telegram, salesHistory] = await Promise.all([
     listOwnContactDateSummaries(),
+    lembretesTelegram(profile.id, 30, 100),
     getOwnSalesHistory(),
   ]);
 
@@ -32,9 +35,11 @@ export default async function DashboardPage() {
         action={<NewContactModal />}
       />
 
-      <MonthlyGoal monthToDateTotal={monthToDateTotal} goal={profile?.monthly_goal ?? null} />
+      <MonthlyGoal monthToDateTotal={monthToDateTotal} goal={profile.monthly_goal} />
 
       <MySalesChart entries={salesHistory} />
+
+      {telegram && <TelegramLembretes dados={telegram} mostrarLista />}
 
       <div>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
