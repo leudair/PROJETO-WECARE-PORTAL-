@@ -68,8 +68,8 @@ export default async function CrmPage({
   return (
     <div className="space-y-6">
       <PageHeader
-        title="CRM"
-        description="Todos os clientes e leads, de todas as vendedoras, num lugar só — inclusive o que entra automático pelo WhatsApp."
+        title="CRM da equipe"
+        description="Todos os clientes e leads, de W1 ao último W cadastrado, num lugar só — inclusive o que entra automático pelo WhatsApp."
       />
 
       <div className="space-y-3">

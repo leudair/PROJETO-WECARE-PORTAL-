@@ -30,7 +30,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "/admin", label: "Visão geral", icon: <OverviewIcon className="h-5 w-5" /> },
     { href: "/admin/equipe", label: "Equipe hoje", icon: <BellIcon className="h-5 w-5" />, matchPrefix: true },
     { href: "/admin/contatos", label: "Contatos", icon: <EmployeesIcon className="h-5 w-5" /> },
-    { href: "/admin/crm", label: "CRM", icon: <CrmIcon className="h-5 w-5" /> },
     { href: "/financeiro", label: "Financeiro", icon: <FinanceIcon className="h-5 w-5" />, matchPrefix: true },
     { href: "/admin/employees", label: "Funcionários", icon: <EmployeesIcon className="h-5 w-5" /> },
     { href: "/admin/meu-codigo", label: "Meu código", icon: <SettingsIcon className="h-5 w-5" /> },
@@ -39,6 +38,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     ...(mySiteUrl ? [{ href: mySiteUrl, label: "Meu site", icon: <SiteIcon className="h-5 w-5" />, external: true }] : []),
     ...(myAiUrl ? [{ href: myAiUrl, label: "Minha IA", icon: <AiIcon className="h-5 w-5" />, external: true }] : []),
     { href: "https://radar.portalwecare.com.br", label: "Radar", icon: <RadarIcon className="h-5 w-5" />, external: true },
+    // Abaixo do Radar, a pedido: CRM da equipe, com acesso de W1 ao ultimo W cadastrado.
+    { href: "/admin/crm", label: "CRM da equipe", icon: <CrmIcon className="h-5 w-5" /> },
     { href: "https://t.me/agenciawecare_bot", label: "Bot de avisos", icon: <TelegramIcon className="h-5 w-5" />, external: true },
     { href: "#", label: "Reunião", icon: <MeetingIcon className="h-5 w-5" />, disabled: true },
   ];
