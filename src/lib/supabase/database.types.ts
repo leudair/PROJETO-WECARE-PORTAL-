@@ -72,6 +72,7 @@ export interface Database {
           full_name: string;
           whatsapp_number: string;
           role: ProfileRole;
+          monthly_goal: number | null;
           created_at: string;
         };
         Insert: {
@@ -79,6 +80,7 @@ export interface Database {
           full_name: string;
           whatsapp_number: string;
           role?: ProfileRole;
+          monthly_goal?: number | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
@@ -99,6 +101,8 @@ export interface Database {
           lead_interest_value: number | null;
           converted: boolean;
           converted_at: string | null;
+          tags: string[];
+          source: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -116,6 +120,8 @@ export interface Database {
           lead_interest_value?: number | null;
           converted?: boolean;
           converted_at?: string | null;
+          tags?: string[];
+          source?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -126,6 +132,32 @@ export interface Database {
             columns: ["owner_id"];
             isOneToOne: false;
             referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      contact_notes: {
+        Row: {
+          id: string;
+          contact_id: string;
+          author: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          contact_id: string;
+          author: string;
+          content: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["contact_notes"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "contact_notes_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
             referencedColumns: ["id"];
           },
         ];

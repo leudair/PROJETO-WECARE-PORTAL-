@@ -216,6 +216,100 @@ export async function listEmployeeContactsPaginated(employeeId: string, page: nu
   };
 }
 
+// Filtros da tela /admin/crm (opcoes pros seletores: vendedoras e tags em uso).
+export async function listCrmFilterOptions() {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const [{ data: employees, error: employeesError }, { data: tagRows, error: tagsError }] = await Promise.all([
+    supabase.from("profiles").select("*").eq("role", "employee").order("full_name", { ascending: true }),
+    supabase.from("contacts").select("tags"),
+  ]);
+
+  if (employeesError) throw employeesError;
+  if (tagsError) throw tagsError;
+
+  const tagSet = new Set<string>();
+  for (const row of tagRows) for (const tag of row.tags ?? []) tagSet.add(tag);
+
+  return { employees, tags: Array.from(tagSet).sort() };
+}
+
+export type CrmFilters = {
+  ownerId?: string;
+  contactType?: "cliente" | "lead";
+  tag?: string;
+  search?: string;
+};
+
+const CRM_PAGE_SIZE = 25;
+
+// Lista de contatos pra tela /admin/crm — visao unica de todas as vendedoras,
+// com as tags (faixa de valor etc.) e as notas gravadas pelos pedidos
+// automaticos (wa-crm / wa-ia / zapi-ia). Paginada porque o volume migrado
+// do PipeRun e grande (milhares de contatos).
+export async function listCrmContacts(filters: CrmFilters, page: number) {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const safePage = Math.max(1, page);
+  const from = (safePage - 1) * CRM_PAGE_SIZE;
+  const to = from + CRM_PAGE_SIZE - 1;
+
+  let query = supabase.from("contacts").select("*", { count: "exact" });
+  if (filters.ownerId) query = query.eq("owner_id", filters.ownerId);
+  if (filters.contactType) query = query.eq("contact_type", filters.contactType);
+  if (filters.tag) query = query.contains("tags", [filters.tag]);
+  if (filters.search) {
+    // tira virgula/parenteses/% pra nao escapar do filtro .or() do PostgREST
+    const safe = filters.search.replace(/[,()%]/g, "").trim();
+    if (safe) query = query.or(`name.ilike.%${safe}%,phone.ilike.%${safe}%`);
+  }
+
+  const { data: contacts, error, count } = await query
+    .order("updated_at", { ascending: false })
+    .range(from, to);
+  if (error) throw error;
+
+  const ownerIds = [...new Set(contacts.map((c) => c.owner_id))];
+  const contactIds = contacts.map((c) => c.id);
+
+  const [{ data: owners, error: ownersError }, { data: notes, error: notesError }] = await Promise.all([
+    ownerIds.length
+      ? supabase.from("profiles").select("*").in("id", ownerIds)
+      : Promise.resolve({ data: [], error: null }),
+    contactIds.length
+      ? supabase.from("contact_notes").select("*").in("contact_id", contactIds).order("created_at", { ascending: false })
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (ownersError) throw ownersError;
+  if (notesError) throw notesError;
+
+  const ownerById = new Map(owners.map((o) => [o.id, o]));
+  const notesByContact = new Map<string, typeof notes>();
+  for (const note of notes) {
+    const list = notesByContact.get(note.contact_id) ?? [];
+    list.push(note);
+    notesByContact.set(note.contact_id, list);
+  }
+
+  const rows = contacts.map((contact) => ({
+    contact,
+    owner: ownerById.get(contact.owner_id) ?? null,
+    notes: notesByContact.get(contact.id) ?? [],
+  }));
+
+  const totalCount = count ?? 0;
+
+  return {
+    rows,
+    page: safePage,
+    pageSize: CRM_PAGE_SIZE,
+    totalCount,
+    totalPages: Math.max(1, Math.ceil(totalCount / CRM_PAGE_SIZE)),
+  };
+}
+
 export async function listEmployees() {
   await requireAdmin();
   const supabase = await createClient();
@@ -319,6 +413,11 @@ export const UpdateEmployeeSchema = z.object({
     .regex(/^\+[1-9]\d{7,14}$/, "Use o formato internacional, ex: +5511999999999"),
   role: z.enum(["employee", "manager", "financeiro"]),
   password: PasswordSchema.optional().or(z.literal("").transform(() => undefined)),
+  monthlyGoal: z.coerce
+    .number()
+    .min(0, "Meta não pode ser negativa.")
+    .optional()
+    .or(z.literal("").transform(() => undefined)),
 });
 
 export async function updateEmployee(input: z.infer<typeof UpdateEmployeeSchema>) {
@@ -342,7 +441,12 @@ export async function updateEmployee(input: z.infer<typeof UpdateEmployeeSchema>
 
   const { error: profileError } = await admin
     .from("profiles")
-    .update({ full_name: input.fullName, whatsapp_number: input.whatsappNumber, role: input.role })
+    .update({
+      full_name: input.fullName,
+      whatsapp_number: input.whatsappNumber,
+      role: input.role,
+      monthly_goal: input.monthlyGoal ?? null,
+    })
     .eq("id", input.employeeId);
 
   if (profileError) throw profileError;

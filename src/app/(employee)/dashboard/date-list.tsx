@@ -17,21 +17,27 @@ export function DateList({ dates }: { dates: DateSummary[] }) {
   const hidden = dates.length - visible.length;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {visible.map(({ date, total, leads, clientes }) => (
         <Link
           key={date}
           href={`/dashboard/dia/${date}`}
-          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-surface p-4 hover:bg-surface-2"
+          className="card-glass group flex flex-wrap items-center justify-between gap-3 p-5 transition hover:border-primary/40"
         >
-          <div>
-            <p className="font-semibold text-foreground">Lembretes de {formatDate(date)}</p>
-            <p className="text-xs text-muted">
-              {clientes} cliente{clientes === 1 ? "" : "s"} · {leads} lead{leads === 1 ? "" : "s"}
-            </p>
+          <div className="flex min-w-0 items-center gap-3.5">
+            <span className="icon-orb h-10 w-10 shrink-0 text-xs font-bold text-white">
+              {new Date(`${date}T00:00:00`).getDate()}
+            </span>
+            <div className="min-w-0">
+              <h3 className="font-bold text-foreground">{formatDate(date)}</h3>
+              <p className="mt-0.5 text-xs text-muted">
+                {clientes} cliente{clientes === 1 ? "" : "s"} · {leads} lead{leads === 1 ? "" : "s"}
+              </p>
+            </div>
           </div>
-          <span className="rounded-md border border-border px-3 py-1 text-xs text-primary">
-            {total} lembrete{total === 1 ? "" : "s"} →
+          <span className="flex shrink-0 items-center gap-1.5 text-xs text-primary">
+            {total} lembrete{total === 1 ? "" : "s"}
+            <span className="transition group-hover:translate-x-0.5">→</span>
           </span>
         </Link>
       ))}

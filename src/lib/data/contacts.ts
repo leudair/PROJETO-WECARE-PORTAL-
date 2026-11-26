@@ -37,6 +37,29 @@ export type ContactInput = z.infer<typeof ContactInputSchema>;
 // interesse por um valor especifico — ver DAL de admin (dinheiro na mesa).
 export const DEFAULT_LEAD_INTEREST_VALUE = 50;
 
+// Vendas que ela mesma marcou (ConvertLeadButton / "Marcar como convertido")
+// — usado pro gráfico "Minhas vendas" no dashboard. Diferente do faturamento
+// oficial do Financeiro (financial_entries): aqui é o registro bruto dela,
+// disponível na hora, sem esperar o Financeiro lançar a semana.
+export async function getOwnSalesHistory() {
+  const profile = await requireProfile();
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("name, last_purchase_value, converted_at")
+    .eq("owner_id", profile.id)
+    .eq("converted", true)
+    .order("converted_at", { ascending: false });
+
+  if (error) throw error;
+
+  return data.filter(
+    (row): row is { name: string; last_purchase_value: number; converted_at: string } =>
+      row.converted_at != null && row.last_purchase_value != null
+  );
+}
+
 export async function listOwnContacts() {
   const profile = await requireProfile();
   const supabase = await createClient();

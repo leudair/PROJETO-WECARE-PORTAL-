@@ -67,7 +67,7 @@ export async function updatePurchaseValueAction(
   revalidatePath("/admin");
 }
 
-export type AddContactState = { error?: string } | undefined;
+export type AddContactState = { error?: string; success?: boolean } | undefined;
 
 export async function addContact(_state: AddContactState, formData: FormData): Promise<AddContactState> {
   const parsed = ContactInputSchema.safeParse({
@@ -92,4 +92,5 @@ export async function addContact(_state: AddContactState, formData: FormData): P
   }
 
   revalidatePath("/dashboard");
+  return { success: true };
 }

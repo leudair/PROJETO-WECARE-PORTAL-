@@ -24,23 +24,21 @@ export default async function DashboardDayPage({ params }: { params: Promise<{ d
         <Link href="/dashboard" className="text-xs text-primary hover:underline">
           ← Voltar pros meus lembretes
         </Link>
-        <h1 className="mt-1 text-lg font-semibold text-foreground">Lembretes de {formatDate(date)}</h1>
-        <p className="text-sm text-muted">
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">Lembretes de {formatDate(date)}</h1>
+        <p className="mt-1 text-sm text-muted">
           {contacts.length} lembrete{contacts.length === 1 ? "" : "s"} pra essa data.
         </p>
       </div>
 
       {contacts.length === 0 && (
-        <div className="rounded-xl border border-border bg-surface p-6 text-center text-sm text-muted">
-          Nenhum lembrete cadastrado pra essa data.
-        </div>
+        <div className="card-glass p-6 text-center text-sm text-muted">Nenhum lembrete cadastrado pra essa data.</div>
       )}
 
       <div className="space-y-3">
         {contacts.map((contact) => (
-          <div key={contact.id} className="rounded-xl border border-border bg-surface p-4">
+          <div key={contact.id} className="card-glass p-5">
             <div className="mb-3 flex flex-wrap items-baseline justify-between gap-1">
-              <h3 className="font-semibold text-foreground">
+              <h3 className="font-bold text-foreground">
                 {contact.name}
                 {contact.instagram_handle && (
                   <span className="ml-1 font-normal text-muted">@{contact.instagram_handle}</span>
@@ -73,7 +71,7 @@ export default async function DashboardDayPage({ params }: { params: Promise<{ d
             {contact.contact_type === "lead" && (
               <div className="mt-3">
                 {contact.converted ? (
-                  <span className="inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">
+                  <span className="inline-block rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-400">
                     Convertido ✓
                   </span>
                 ) : (

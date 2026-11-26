@@ -44,7 +44,7 @@ export function PurchaseValue({ contactId, value }: { contactId: string; value: 
   return (
     <span className="inline-flex items-center gap-1.5">
       {value != null ? (
-        <span className="font-semibold text-green-700 dark:text-green-400">{formatCurrency(value)}</span>
+        <span className="font-semibold text-green-400">{formatCurrency(value)}</span>
       ) : (
         <span className="text-muted">—</span>
       )}
