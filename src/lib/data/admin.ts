@@ -310,6 +310,58 @@ export async function listCrmContacts(filters: CrmFilters, page: number) {
   };
 }
 
+// As 4 colunas do board /admin/crm — vem da classificação de engajamento
+// (tag aplicada por quem analisou as conversas dos últimos 6 meses). Contato
+// sem nenhuma dessas tags não aparece no board (não dá pra saber a coluna).
+export const CRM_BOARD_COLUMNS = [
+  { tag: "Cliente frequente", key: "frequente", label: "Clientes frequentes", color: "#ffd24a" },
+  { tag: "Cliente recente (60 dias)", key: "recente", label: "Clientes recentes (60 dias)", color: "#17c98a" },
+  { tag: "Lead engajado (60 dias)", key: "engajado", label: "Leads engajados", color: "#8c5cff" },
+  { tag: "Lead não engajado", key: "nao_engajado", label: "Leads não engajados", color: "#6c6d82" },
+] as const;
+
+export async function listCrmBoard() {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const tags = CRM_BOARD_COLUMNS.map((c) => c.tag);
+  const [{ data: contacts, error: contactsError }, { data: owners, error: ownersError }] = await Promise.all([
+    supabase.from("contacts").select("*").overlaps("tags", tags),
+    supabase.from("profiles").select("id, full_name"),
+  ]);
+  if (contactsError) throw contactsError;
+  if (ownersError) throw ownersError;
+
+  const contactIds = contacts.map((c) => c.id);
+  const { data: notes, error: notesError } = contactIds.length
+    ? await supabase.from("contact_notes").select("*").in("contact_id", contactIds).order("created_at", { ascending: false })
+    : { data: [], error: null };
+  if (notesError) throw notesError;
+
+  const ownerById = new Map(owners.map((o) => [o.id, o.full_name]));
+  const latestNoteByContact = new Map<string, string>();
+  for (const note of notes) if (!latestNoteByContact.has(note.contact_id)) latestNoteByContact.set(note.contact_id, note.content);
+
+  const cards = contacts.map((contact) => ({
+    id: contact.id,
+    name: contact.name,
+    phone: contact.phone,
+    ownerName: ownerById.get(contact.owner_id) ?? "—",
+    value: contact.contact_type === "cliente" ? contact.last_purchase_value : contact.lead_interest_value,
+    referenceDate: contact.next_contact_date,
+    tags: contact.tags,
+    pais: (contact.phone.startsWith("+55") ? "brasil" : "fora") as "brasil" | "fora",
+    note: latestNoteByContact.get(contact.id) ?? null,
+  }));
+
+  const columns = CRM_BOARD_COLUMNS.map((col) => ({
+    ...col,
+    cards: cards.filter((c) => c.tags.includes(col.tag)).sort((a, b) => a.referenceDate.localeCompare(b.referenceDate)),
+  }));
+
+  return { columns };
+}
+
 export async function listEmployees() {
   await requireAdmin();
   const supabase = await createClient();
