@@ -28,6 +28,7 @@ export function Sidebar({
   roleLabel,
   logoutAction,
   profileHref,
+  avatarUrl,
 }: {
   navItems: SidebarNavItem[];
   userName: string;
@@ -35,6 +36,8 @@ export function Sidebar({
   logoutAction: () => void | Promise<void>;
   /** Se informado, o cartao do usuario (nome + cargo) vira botao para essa rota. */
   profileHref?: string;
+  /** Foto de perfil, se a pessoa ja tiver uma cadastrada. Sem isso, mostra as iniciais. */
+  avatarUrl?: string | null;
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -102,14 +105,24 @@ export function Sidebar({
 
       {!collapsed && (
         <div className="flex flex-col items-center gap-2 px-4 pb-5">
-          {/* Foto da funcionaria — por enquanto so as iniciais (sem upload
-              ainda). Proporcao 3x4 (retrato), com moldura dupla discreta
+          {/* Foto da pessoa — se ela ainda nao tiver uma cadastrada, mostra as
+              iniciais. Proporcao 3x4 (retrato), com moldura dupla discreta
               (linha dourada por fora, linha clara por dentro) pra um
               acabamento mais "quadro na parede" do que avatar de app. */}
           <div className="flex h-32 w-24 items-center justify-center rounded-md border border-[#c9a227]/40 bg-gradient-to-br from-[#f06478] to-[#b0102f] p-[3px] shadow-[0_6px_16px_-4px_rgba(196,18,48,0.45)]">
-            <div className="flex h-full w-full items-center justify-center rounded-[3px] border border-white/15 text-2xl font-bold text-white">
-              {initials || "?"}
-            </div>
+            {avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                alt={displayName}
+                width={96}
+                height={128}
+                className="h-full w-full rounded-[3px] border border-white/15 object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center rounded-[3px] border border-white/15 text-2xl font-bold text-white">
+                {initials || "?"}
+              </div>
+            )}
           </div>
           <span className="max-w-[96px] truncate text-xs font-semibold text-foreground">{displayName}</span>
         </div>

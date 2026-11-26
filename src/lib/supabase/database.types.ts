@@ -73,6 +73,7 @@ export interface Database {
           whatsapp_number: string;
           role: ProfileRole;
           monthly_goal: number | null;
+          avatar_url: string | null;
           created_at: string;
         };
         Insert: {
@@ -81,6 +82,7 @@ export interface Database {
           whatsapp_number: string;
           role?: ProfileRole;
           monthly_goal?: number | null;
+          avatar_url?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
