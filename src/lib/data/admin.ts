@@ -599,17 +599,46 @@ export async function listFaturamentoMensalEmpresa() {
   return data;
 }
 
-// Contatos do W1 (Eduarda) organizados pelo histórico de 6 meses, importados
-// via W1-para-o-CRM.md. Classificação é uma foto da data_referencia.
-export const CRM_W1_GRUPOS = ["cliente engajado", "cliente parado", "lead engajado", "lead não engajado"] as const;
-export type CrmW1Grupo = (typeof CRM_W1_GRUPOS)[number];
+// Contatos organizados pelo histórico de 6 meses, por vendedora, importados
+// via documento tipo W1-para-o-CRM.md. Classificação é uma foto da
+// data_referencia de cada vendedora (cada uma pode ter sido feita em dia
+// diferente). Hoje só W1 (com agenda do e-mail, alta confiança) e W11 (sem
+// agenda, só pelo nome salvo no WhatsApp, confiança menor) têm esses dados.
+export const CRM_HISTORICO_GRUPOS = ["cliente engajado", "cliente parado", "lead engajado", "lead não engajado"] as const;
+export type CrmHistoricoGrupo = (typeof CRM_HISTORICO_GRUPOS)[number];
 
-export async function resumoCrmW1() {
+export async function listVendedorasComCrmOrganizado() {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("crm_classificacao").select("codigo_vendedora");
+  if (error) throw error;
+
+  const codigos = Array.from(new Set(data.map((r) => r.codigo_vendedora))).sort((a, b) => {
+    const na = Number(a.match(/^W(\d+)/i)?.[1] ?? 999);
+    const nb = Number(b.match(/^W(\d+)/i)?.[1] ?? 999);
+    return na - nb;
+  });
+  if (codigos.length === 0) return [];
+
+  const { data: funcionarios, error: funcError } = await supabase
+    .from("wa_funcionarios")
+    .select("codigo, nome")
+    .in("codigo", codigos);
+  if (funcError) throw funcError;
+  const nomeByCodigo = new Map(funcionarios.map((f) => [f.codigo, f.nome]));
+
+  return codigos.map((codigo) => ({ codigo, nome: nomeByCodigo.get(codigo) ?? codigo }));
+}
+
+export async function resumoCrmVendedora(codigoVendedora: string) {
   await requireAdmin();
   const supabase = await createClient();
 
-  const contagem = async (grupo?: CrmW1Grupo, pais?: "Brasil" | "fora") => {
-    let query = supabase.from("crm_classificacao_w1").select("*", { count: "exact", head: true });
+  const contagem = async (grupo?: CrmHistoricoGrupo, pais?: "Brasil" | "fora") => {
+    let query = supabase
+      .from("crm_classificacao")
+      .select("*", { count: "exact", head: true })
+      .eq("codigo_vendedora", codigoVendedora);
     if (grupo) query = query.eq("grupo_historico", grupo);
     if (pais) query = query.eq("pais", pais);
     const { count, error } = await query;
@@ -617,35 +646,36 @@ export async function resumoCrmW1() {
     return count ?? 0;
   };
 
-  const [total, brasil, fora, porGrupo] = await Promise.all([
+  const [total, brasil, fora, porGrupo, referencia] = await Promise.all([
     contagem(),
     contagem(undefined, "Brasil"),
     contagem(undefined, "fora"),
     Promise.all(
-      CRM_W1_GRUPOS.map(async (grupo) => ({
+      CRM_HISTORICO_GRUPOS.map(async (grupo) => ({
         grupo,
         brasil: await contagem(grupo, "Brasil"),
         fora: await contagem(grupo, "fora"),
       })),
     ),
+    supabase.from("crm_classificacao").select("data_referencia").eq("codigo_vendedora", codigoVendedora).limit(1).maybeSingle(),
   ]);
 
-  const dataReferencia = porGrupo.length
-    ? (await supabase.from("crm_classificacao_w1").select("data_referencia").limit(1).maybeSingle()).data?.data_referencia ?? null
-    : null;
-
-  return { total, brasil, fora, porGrupo, dataReferencia };
+  return { total, brasil, fora, porGrupo, dataReferencia: referencia.data?.data_referencia ?? null };
 }
 
-export async function listaCrmW1(filtro: { grupo?: CrmW1Grupo; busca?: string; pagina?: number } = {}) {
+export async function listaCrmVendedora(
+  codigoVendedora: string,
+  filtro: { grupo?: CrmHistoricoGrupo; busca?: string; pagina?: number } = {},
+) {
   await requireAdmin();
   const supabase = await createClient();
   const pagina = filtro.pagina ?? 0;
   const porPagina = 50;
 
   let query = supabase
-    .from("crm_classificacao_w1")
+    .from("crm_classificacao")
     .select("*", { count: "exact" })
+    .eq("codigo_vendedora", codigoVendedora)
     .order("nome_novo", { ascending: true })
     .range(pagina * porPagina, pagina * porPagina + porPagina - 1);
 

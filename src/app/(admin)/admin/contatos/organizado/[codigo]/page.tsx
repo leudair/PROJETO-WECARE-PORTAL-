@@ -1,7 +1,14 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
-import { CRM_W1_GRUPOS, listaCrmW1, resumoCrmW1, type CrmW1Grupo } from "@/lib/data/admin";
+import {
+  CRM_HISTORICO_GRUPOS,
+  listVendedorasComCrmOrganizado,
+  listaCrmVendedora,
+  resumoCrmVendedora,
+  type CrmHistoricoGrupo,
+} from "@/lib/data/admin";
 
 function whatsapp(tel: string) {
   return `https://wa.me/${tel.replace(/\D/g, "")}`;
@@ -12,25 +19,36 @@ function formatData(data: string | null) {
   return new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR");
 }
 
-const ROTULO_GRUPO: Record<CrmW1Grupo, string> = {
+const ROTULO_GRUPO: Record<CrmHistoricoGrupo, string> = {
   "cliente engajado": "Cliente engajado",
   "cliente parado": "Cliente parado",
   "lead engajado": "Lead engajado",
   "lead não engajado": "Lead não engajado",
 };
 
-// Contatos do W1 (Eduarda), organizados pelo historico de 6 meses. Importado
-// via W1-para-o-CRM.md em 27/11/2026 — classificacao e uma foto daquele dia.
-export default async function ContatosW1Page({
+// Contatos de uma vendedora organizados pelo historico de 6 meses. So vendedoras
+// que ja passaram pelo processo (documento tipo W1-para-o-CRM.md) aparecem aqui;
+// as demais ainda dependem do historico de WhatsApp ser baixado e classificado.
+export default async function ContatosOrganizadoPage({
+  params,
   searchParams,
 }: {
+  params: Promise<{ codigo: string }>;
   searchParams: Promise<{ grupo?: string; busca?: string; pagina?: string }>;
 }) {
+  const { codigo: codigoParam } = await params;
+  const codigo = codigoParam.toUpperCase();
   const { grupo: grupoParam, busca, pagina: paginaParam } = await searchParams;
-  const grupo = CRM_W1_GRUPOS.find((g) => g === grupoParam);
+  const grupo = CRM_HISTORICO_GRUPOS.find((g) => g === grupoParam);
   const pagina = Math.max(0, Number(paginaParam ?? 0) || 0);
 
-  const [resumo, lista] = await Promise.all([resumoCrmW1(), listaCrmW1({ grupo, busca, pagina })]);
+  const vendedoras = await listVendedorasComCrmOrganizado();
+  if (!vendedoras.some((v) => v.codigo === codigo)) notFound();
+
+  const [resumo, lista] = await Promise.all([
+    resumoCrmVendedora(codigo),
+    listaCrmVendedora(codigo, { grupo, busca, pagina }),
+  ]);
 
   const totalPaginas = Math.max(1, Math.ceil(lista.total / lista.porPagina));
   const query = (overrides: Record<string, string | number | undefined>) => {
@@ -46,14 +64,31 @@ export default async function ContatosW1Page({
     return s ? `?${s}` : "";
   };
 
+  const nomeAtual = vendedoras.find((v) => v.codigo === codigo)?.nome ?? codigo;
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Contatos do W1"
-        description={`Eduarda · ${resumo.total.toLocaleString("pt-BR")} contatos, organizados pelo histórico de 6 meses. Foto de ${
+        title="Contatos organizados"
+        description={`${nomeAtual} · ${resumo.total.toLocaleString("pt-BR")} contatos pelo histórico de 6 meses. Foto de ${
           resumo.dataReferencia ? formatData(resumo.dataReferencia) : "—"
         }.`}
       />
+
+      <nav className="barra-vidro">
+        {vendedoras.map((v) => (
+          <Link key={v.codigo} href={`/admin/contatos/organizado/${v.codigo.toLowerCase()}`} className={v.codigo === codigo ? "ativo" : ""}>
+            {v.codigo}
+          </Link>
+        ))}
+      </nav>
+
+      {codigo === "W11" && (
+        <div className="card-glass border-l-4 border-l-yellow-500/70 p-4 text-sm text-muted">
+          A W11 ainda não tem a agenda do e-mail importada, então essa classificação usa só o nome salvo no WhatsApp.
+          É menos precisa que a da W1, cliente e lead podem errar mais aqui.
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {resumo.porGrupo.map(({ grupo: g, brasil, fora }) => (
@@ -73,7 +108,7 @@ export default async function ContatosW1Page({
           <Link href={query({ grupo: undefined, pagina: undefined })} className={!grupo ? "ativo" : ""}>
             Todos
           </Link>
-          {CRM_W1_GRUPOS.map((g) => (
+          {CRM_HISTORICO_GRUPOS.map((g) => (
             <Link key={g} href={query({ grupo: g, pagina: undefined })} className={grupo === g ? "ativo" : ""}>
               {ROTULO_GRUPO[g]}
             </Link>
