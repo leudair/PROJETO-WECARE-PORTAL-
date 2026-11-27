@@ -164,6 +164,26 @@ export interface Database {
           },
         ];
       };
+      faturamento_mensal_empresa: {
+        Row: {
+          mes: string;
+          vendas: number;
+          novos_clientes: number;
+          faturamento: number;
+          lucro: number | null;
+          created_at: string;
+        };
+        Insert: {
+          mes: string;
+          vendas?: number;
+          novos_clientes?: number;
+          faturamento: number;
+          lucro?: number | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["faturamento_mensal_empresa"]["Insert"]>;
+        Relationships: [];
+      };
       reunioes: {
         Row: {
           id: string;

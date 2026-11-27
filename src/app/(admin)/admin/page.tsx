@@ -1,36 +1,20 @@
 import Link from "next/link";
-import { listOverview, listEmployeeContactSummaries } from "@/lib/data/admin";
+import { listOverview, listEmployeeContactSummaries, listFaturamentoMensalEmpresa } from "@/lib/data/admin";
 import { listMonthlyRevenueEntries } from "@/lib/data/finance";
 import { PageHeader } from "@/components/page-header";
-import { todayInSaoPaulo } from "@/lib/date";
 import { MonthlyRevenueChart, type RevenueEntry } from "./monthly-revenue-chart";
-import { OverviewKpis } from "./overview-kpis";
-
-const MONTH_ABBR = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-const KPI_MONTHS_BACK = 5; // + mes atual = 6 pontos no sparkline, igual ao grafico de faturamento
+import { CompanyRevenueChart } from "./company-revenue-chart";
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-// Ultimos 6 meses (rotulo + chave "YYYY-MM"), a partir da data do servidor
-// em horario de Sao Paulo — mesma janela que o grafico de faturamento usa,
-// so que calculada aqui (server) por string em vez de Date local do browser.
-function lastMonths(count: number) {
-  const [year, month] = todayInSaoPaulo().slice(0, 7).split("-").map(Number);
-  const months = [];
-  for (let i = count; i >= 0; i--) {
-    const d = new Date(Date.UTC(year, month - 1 - i, 1));
-    months.push({ key: `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`, label: MONTH_ABBR[d.getUTCMonth()] });
-  }
-  return months;
-}
-
 export default async function AdminOverviewPage() {
-  const [{ moneyOnTable, responseSummary }, employeeSummaries, monthlyRevenueRows] = await Promise.all([
+  const [{ moneyOnTable }, employeeSummaries, monthlyRevenueRows, faturamentoMensalEmpresa] = await Promise.all([
     listOverview(),
     listEmployeeContactSummaries(),
     listMonthlyRevenueEntries(),
+    listFaturamentoMensalEmpresa(),
   ]);
 
   const revenueEntries: RevenueEntry[] = monthlyRevenueRows.map(({ entry, employeeName }) => ({
@@ -39,27 +23,11 @@ export default async function AdminOverviewPage() {
     faturamento: entry.faturamento,
   }));
 
-  const revenueSeries = lastMonths(KPI_MONTHS_BACK).map(({ key, label }) => ({
-    label,
-    total: revenueEntries.filter((e) => e.monthKey === key).reduce((sum, e) => sum + e.faturamento, 0),
-  }));
-
-  const responseTotals = responseSummary.reduce(
-    (acc, r) => ({ sent: acc.sent + r.sent, replied: acc.replied + r.replied }),
-    { sent: 0, replied: 0 },
-  );
-
   return (
     <div className="space-y-10">
       <PageHeader title="Visão geral" description="Faturamento da equipe e acompanhamento de leads." />
 
-      <OverviewKpis
-        revenueSeries={revenueSeries}
-        moneyOnTableTotal={moneyOnTable.reduce((sum, r) => sum + r.total, 0)}
-        moneyOnTableCount={moneyOnTable.reduce((sum, r) => sum + r.count, 0)}
-        responseSent={responseTotals.sent}
-        responseReplied={responseTotals.replied}
-      />
+      <CompanyRevenueChart data={faturamentoMensalEmpresa} />
 
       <MonthlyRevenueChart entries={revenueEntries} />
 
