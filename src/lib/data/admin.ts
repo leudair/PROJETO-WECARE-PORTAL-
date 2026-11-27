@@ -589,6 +589,16 @@ export async function updateTemplate(stage: number, body: string) {
   if (error) throw error;
 }
 
+// Historico de faturamento da empresa toda (nao por funcionaria), importado
+// dos relatorios VENDAS_EMPRESA — alimenta o grafico grande da Visao geral.
+export async function listFaturamentoMensalEmpresa() {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("faturamento_mensal_empresa").select("*").order("mes", { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
 export async function exportContactsForEmployee(employeeId: string) {
   await requireAdmin();
   const supabase = await createClient();
