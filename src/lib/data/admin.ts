@@ -320,6 +320,35 @@ export const CRM_BOARD_COLUMNS = [
   { tag: "Lead não engajado", key: "nao_engajado", label: "Leads não engajados", color: "#6c6d82" },
 ] as const;
 
+// Pelo DDI do telefone — cobre os países que o Leudair mais vê vindo do
+// anúncio (EUA, Canadá, Portugal e o resto da Europa). +1 é compartilhado
+// por EUA e Canadá (não dá pra separar só pelo DDI), por isso o rótulo junto.
+// Checar do prefixo mais longo pro mais curto, senao "55" bateria antes de "595".
+const PAISES: { ddi: string; nome: string; bandeira: string; europa?: boolean }[] = [
+  { ddi: "351", nome: "Portugal", bandeira: "🇵🇹", europa: true },
+  { ddi: "353", nome: "Irlanda", bandeira: "🇮🇪", europa: true },
+  { ddi: "352", nome: "Luxemburgo", bandeira: "🇱🇺", europa: true },
+  { ddi: "595", nome: "Paraguai", bandeira: "🇵🇾" },
+  { ddi: "598", nome: "Uruguai", bandeira: "🇺🇾" },
+  { ddi: "971", nome: "Emirados Árabes", bandeira: "🇦🇪" },
+  { ddi: "55", nome: "Brasil", bandeira: "🇧🇷" },
+  { ddi: "54", nome: "Argentina", bandeira: "🇦🇷" },
+  { ddi: "56", nome: "Chile", bandeira: "🇨🇱" },
+  { ddi: "57", nome: "Colômbia", bandeira: "🇨🇴" },
+  { ddi: "39", nome: "Itália", bandeira: "🇮🇹", europa: true },
+  { ddi: "34", nome: "Espanha", bandeira: "🇪🇸", europa: true },
+  { ddi: "44", nome: "Reino Unido", bandeira: "🇬🇧", europa: true },
+  { ddi: "33", nome: "França", bandeira: "🇫🇷", europa: true },
+  { ddi: "49", nome: "Alemanha", bandeira: "🇩🇪", europa: true },
+  { ddi: "61", nome: "Austrália", bandeira: "🇦🇺" },
+  { ddi: "1", nome: "Estados Unidos/Canadá", bandeira: "🇺🇸" },
+];
+function paisDoTelefone(phone: string) {
+  const digitos = phone.replace(/\D/g, "");
+  for (const p of PAISES) if (digitos.startsWith(p.ddi)) return p;
+  return { ddi: "", nome: "Outro país", bandeira: "🌍", europa: false };
+}
+
 export async function listCrmBoard() {
   await requireAdmin();
   const supabase = await createClient();
@@ -346,19 +375,24 @@ export async function listCrmBoard() {
   const latestNoteByContact = new Map<string, string>();
   for (const note of notes) if (!latestNoteByContact.has(note.contact_id)) latestNoteByContact.set(note.contact_id, note.content);
 
-  const cards = contacts.map((contact) => ({
-    id: contact.id,
-    name: contact.name,
-    phone: contact.phone,
-    ownerId: contact.owner_id,
-    ownerName: ownerById.get(contact.owner_id) ?? "—",
-    value: contact.contact_type === "cliente" ? contact.last_purchase_value : contact.lead_interest_value,
-    referenceDate: contact.next_contact_date,
-    tags: contact.tags,
-    contactType: contact.contact_type,
-    pais: (contact.phone.startsWith("+55") ? "brasil" : "fora") as "brasil" | "fora",
-    note: latestNoteByContact.get(contact.id) ?? null,
-  }));
+  const cards = contacts.map((contact) => {
+    const pais = paisDoTelefone(contact.phone);
+    return {
+      id: contact.id,
+      name: contact.name,
+      phone: contact.phone,
+      ownerId: contact.owner_id,
+      ownerName: ownerById.get(contact.owner_id) ?? "—",
+      value: contact.contact_type === "cliente" ? contact.last_purchase_value : contact.lead_interest_value,
+      referenceDate: contact.next_contact_date,
+      tags: contact.tags,
+      contactType: contact.contact_type,
+      pais: pais.nome,
+      bandeira: pais.bandeira,
+      europa: !!pais.europa,
+      note: latestNoteByContact.get(contact.id) ?? null,
+    };
+  });
 
   const columns = CRM_BOARD_COLUMNS.map((col) => ({
     ...col,
@@ -372,7 +406,8 @@ export async function listCrmBoard() {
   for (const c of cards) {
     if (vistos.has(c.id)) continue;
     vistos.add(c.id);
-    const chave = c.contactType === "cliente" ? (c.pais === "brasil" ? "clienteBrasil" : "clienteFora") : c.pais === "brasil" ? "leadBrasil" : "leadFora";
+    const fora = c.pais !== "Brasil";
+    const chave = c.contactType === "cliente" ? (fora ? "clienteFora" : "clienteBrasil") : fora ? "leadFora" : "leadBrasil";
     stats[chave]++;
   }
 
