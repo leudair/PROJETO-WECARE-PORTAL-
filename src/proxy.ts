@@ -60,8 +60,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // reuniao.html e calculadora.html = paginas estaticas (assets/ + fonts/) sem auth, de proposito
+  // calculadora.html = pagina estatica (assets/ + fonts/) sem auth, de proposito
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|reuniao\\.html|calculadora\\.html|assets/|fonts/|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico|pdf)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|calculadora\\.html|assets/|fonts/|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico|pdf)$).*)",
   ],
 };

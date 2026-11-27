@@ -16,11 +16,17 @@ export interface SidebarNavItem {
   /** Produto ainda nao existe — aparece no menu (pra mostrar o que vem por ai) mas nao navega pra lugar nenhum. */
   disabled?: boolean;
   /**
-   * Em vez de navegar, abre esse src num painel flutuante por cima do portal
-   * (pra paginas estaticas proprias, tipo /reuniao.html — um site de
-   * terceiros como o Telegram recusa ser carregado em iframe).
+   * Em vez de navegar, abre esse src num painel flutuante (iframe) por cima
+   * do portal — pra paginas estaticas proprias, tipo /calculadora.html (um
+   * site de terceiros como o Telegram recusa ser carregado em iframe).
    */
   panel?: string;
+  /**
+   * Como panel, mas renderiza esse componente React direto no painel
+   * flutuante em vez de um iframe — pra funcionalidade real dentro do Portal
+   * (ex: o calendario de Reuniao, que precisa de dado ao vivo/autenticado).
+   */
+  panelContent?: ReactNode;
 }
 
 const COLLAPSE_STORAGE_KEY = "wecare-portal-sidebar-collapsed";
@@ -48,7 +54,7 @@ export function Sidebar({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [panel, setPanel] = useState<{ src: string; label: string } | null>(null);
+  const [panel, setPanel] = useState<{ label: string; src?: string; content?: ReactNode } | null>(null);
 
   useEffect(() => {
     // Evita mismatch de hidratacao: o estado recolhido/expandido so e
@@ -92,7 +98,7 @@ export function Sidebar({
   const displayName = userName.replace(/^W\d+\s*-\s*/i, "");
 
   function isActive(item: SidebarNavItem) {
-    if (item.external || item.panel) return false;
+    if (item.external || item.panel || item.panelContent) return false;
     if (item.matchPrefix) return pathname.startsWith(item.href);
     return pathname === item.href;
   }
@@ -172,11 +178,11 @@ export function Sidebar({
             );
           }
 
-          return item.panel ? (
+          return item.panel || item.panelContent ? (
             <button
               key={item.href}
               type="button"
-              onClick={() => setPanel({ src: item.panel!, label: item.label })}
+              onClick={() => setPanel({ label: item.label, src: item.panel, content: item.panelContent })}
               className={className}
               title={collapsed ? item.label : undefined}
             >
@@ -290,8 +296,10 @@ export function Sidebar({
         </button>
       </aside>
 
-      {/* Painel flutuante: abre por cima do portal sem sair da pagina atual
-          (Reuniao, Calculadora — paginas estaticas proprias, embutidas num iframe) */}
+      {/* Painel flutuante: abre por cima do portal sem sair da pagina atual.
+          "content" renderiza um componente React real (dado ao vivo, ex:
+          Reuniao); "src" embute uma pagina estatica propria num iframe
+          (ex: Calculadora). */}
       {panel && (
         <div className="fixed inset-0 z-[70] flex justify-end">
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPanel(null)} />
@@ -307,7 +315,11 @@ export function Sidebar({
                 <CloseIcon className="h-5 w-5" />
               </button>
             </div>
-            <iframe src={panel.src} title={panel.label} className="min-h-0 flex-1 border-0" />
+            {panel.content ? (
+              <div className="min-h-0 flex-1 overflow-hidden">{panel.content}</div>
+            ) : (
+              <iframe src={panel.src} title={panel.label} className="min-h-0 flex-1 border-0" />
+            )}
           </div>
         </div>
       )}
