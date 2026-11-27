@@ -599,6 +599,64 @@ export async function listFaturamentoMensalEmpresa() {
   return data;
 }
 
+// Contatos do W1 (Eduarda) organizados pelo histórico de 6 meses, importados
+// via W1-para-o-CRM.md. Classificação é uma foto da data_referencia.
+export const CRM_W1_GRUPOS = ["cliente engajado", "cliente parado", "lead engajado", "lead não engajado"] as const;
+export type CrmW1Grupo = (typeof CRM_W1_GRUPOS)[number];
+
+export async function resumoCrmW1() {
+  await requireAdmin();
+  const supabase = await createClient();
+
+  const contagem = async (grupo?: CrmW1Grupo, pais?: "Brasil" | "fora") => {
+    let query = supabase.from("crm_classificacao_w1").select("*", { count: "exact", head: true });
+    if (grupo) query = query.eq("grupo_historico", grupo);
+    if (pais) query = query.eq("pais", pais);
+    const { count, error } = await query;
+    if (error) throw error;
+    return count ?? 0;
+  };
+
+  const [total, brasil, fora, porGrupo] = await Promise.all([
+    contagem(),
+    contagem(undefined, "Brasil"),
+    contagem(undefined, "fora"),
+    Promise.all(
+      CRM_W1_GRUPOS.map(async (grupo) => ({
+        grupo,
+        brasil: await contagem(grupo, "Brasil"),
+        fora: await contagem(grupo, "fora"),
+      })),
+    ),
+  ]);
+
+  const dataReferencia = porGrupo.length
+    ? (await supabase.from("crm_classificacao_w1").select("data_referencia").limit(1).maybeSingle()).data?.data_referencia ?? null
+    : null;
+
+  return { total, brasil, fora, porGrupo, dataReferencia };
+}
+
+export async function listaCrmW1(filtro: { grupo?: CrmW1Grupo; busca?: string; pagina?: number } = {}) {
+  await requireAdmin();
+  const supabase = await createClient();
+  const pagina = filtro.pagina ?? 0;
+  const porPagina = 50;
+
+  let query = supabase
+    .from("crm_classificacao_w1")
+    .select("*", { count: "exact" })
+    .order("nome_novo", { ascending: true })
+    .range(pagina * porPagina, pagina * porPagina + porPagina - 1);
+
+  if (filtro.grupo) query = query.eq("grupo_historico", filtro.grupo);
+  if (filtro.busca) query = query.or(`nome_novo.ilike.%${filtro.busca}%,telefone.ilike.%${filtro.busca}%`);
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+  return { contatos: data, total: count ?? 0, pagina, porPagina };
+}
+
 export async function exportContactsForEmployee(employeeId: string) {
   await requireAdmin();
   const supabase = await createClient();

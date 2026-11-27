@@ -30,6 +30,14 @@ export default async function ContatosPage({
     <div className="space-y-6">
       <PageHeader title="Contatos" description="Os contatos de cada vendedora, separados por cor." />
 
+      <Link href="/admin/contatos/w1" className="card-glass flex items-center justify-between gap-3 p-4 transition hover:-translate-y-0.5">
+        <span>
+          <span className="block text-sm font-semibold text-foreground">Contatos do W1, organizados</span>
+          <span className="block text-xs text-muted">Eduarda, 15.720 contatos por grupo do histórico de 6 meses</span>
+        </span>
+        <span className="text-xs font-medium text-primary">Ver →</span>
+      </Link>
+
       <nav className="barra-vidro">
         {lista.map((p) => (
           <Link key={p.id} href={`?v=${p.id}&cor=${cor}`} className={p.id === atual?.id ? "ativo" : ""} title={p.full_name}>

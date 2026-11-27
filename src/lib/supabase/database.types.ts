@@ -184,6 +184,50 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["faturamento_mensal_empresa"]["Insert"]>;
         Relationships: [];
       };
+      crm_classificacao_w1: {
+        Row: {
+          chave: string;
+          codigo_vendedora: string;
+          telefone: string;
+          nome_novo: string | null;
+          nome_antigo: string | null;
+          grupo_agenda: string | null;
+          grupo_historico: string | null;
+          detalhe: string | null;
+          pais: string | null;
+          conversou_6_meses: boolean;
+          ultima_msg: string | null;
+          ultima_msg_cliente: string | null;
+          comprou_6_meses: boolean | null;
+          qtd_compras: number;
+          data_compra: string | null;
+          origem: string | null;
+          data_referencia: string;
+          created_at: string;
+        };
+        Insert: {
+          chave: string;
+          codigo_vendedora?: string;
+          telefone: string;
+          nome_novo?: string | null;
+          nome_antigo?: string | null;
+          grupo_agenda?: string | null;
+          grupo_historico?: string | null;
+          detalhe?: string | null;
+          pais?: string | null;
+          conversou_6_meses?: boolean;
+          ultima_msg?: string | null;
+          ultima_msg_cliente?: string | null;
+          comprou_6_meses?: boolean | null;
+          qtd_compras?: number;
+          data_compra?: string | null;
+          origem?: string | null;
+          data_referencia: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["crm_classificacao_w1"]["Insert"]>;
+        Relationships: [];
+      };
       reunioes: {
         Row: {
           id: string;
