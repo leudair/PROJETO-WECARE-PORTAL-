@@ -34,11 +34,32 @@ const securityHeaders = [
   },
 ];
 
+// reuniao.html e calculadora.html sao abertas num iframe flutuante de dentro
+// do proprio Portal (ver src/components/sidebar.tsx) — precisam permitir ser
+// "framed" pela mesma origem. "frame-ancestors 'none'" / "X-Frame-Options: DENY"
+// bloquearia isso mesmo vindo do nosso proprio dominio, entao essas duas
+// paginas usam uma CSP a parte, so com "self" em vez de "none".
+const framableCspHeader = cspHeader.replace("frame-ancestors 'none'", "frame-ancestors 'self'");
+const framableSecurityHeaders = [
+  { key: "Content-Security-Policy", value: framableCspHeader },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+  },
+];
+
 const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/(.*)",
+        source: "/(reuniao|calculadora)\\.html",
+        headers: framableSecurityHeaders,
+      },
+      {
+        source: "/((?!reuniao\\.html$|calculadora\\.html$).*)",
         headers: securityHeaders,
       },
     ];
