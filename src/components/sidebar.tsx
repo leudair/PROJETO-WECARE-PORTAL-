@@ -15,6 +15,12 @@ export interface SidebarNavItem {
   matchPrefix?: boolean;
   /** Produto ainda nao existe — aparece no menu (pra mostrar o que vem por ai) mas nao navega pra lugar nenhum. */
   disabled?: boolean;
+  /**
+   * Em vez de navegar, abre esse src num painel flutuante por cima do portal
+   * (pra paginas estaticas proprias, tipo /reuniao.html — um site de
+   * terceiros como o Telegram recusa ser carregado em iframe).
+   */
+  panel?: string;
 }
 
 const COLLAPSE_STORAGE_KEY = "wecare-portal-sidebar-collapsed";
@@ -42,6 +48,7 @@ export function Sidebar({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [panel, setPanel] = useState<{ src: string; label: string } | null>(null);
 
   useEffect(() => {
     // Evita mismatch de hidratacao: o estado recolhido/expandido so e
@@ -56,8 +63,9 @@ export function Sidebar({
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fecha o drawer mobile ao trocar de rota
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fecha o drawer mobile e o painel flutuante ao trocar de rota
     setMobileOpen(false);
+    setPanel(null);
   }, [pathname]);
 
   function toggleCollapsed() {
@@ -84,7 +92,7 @@ export function Sidebar({
   const displayName = userName.replace(/^W\d+\s*-\s*/i, "");
 
   function isActive(item: SidebarNavItem) {
-    if (item.external) return false;
+    if (item.external || item.panel) return false;
     if (item.matchPrefix) return pathname.startsWith(item.href);
     return pathname === item.href;
   }
@@ -164,7 +172,17 @@ export function Sidebar({
             );
           }
 
-          return item.external ? (
+          return item.panel ? (
+            <button
+              key={item.href}
+              type="button"
+              onClick={() => setPanel({ src: item.panel!, label: item.label })}
+              className={className}
+              title={collapsed ? item.label : undefined}
+            >
+              {content}
+            </button>
+          ) : item.external ? (
             <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer" className={className} title={collapsed ? item.label : undefined}>
               {content}
             </a>
@@ -271,6 +289,28 @@ export function Sidebar({
           <ChevronLeftIcon className={`h-3.5 w-3.5 transition-transform ${collapsed ? "rotate-180" : ""}`} />
         </button>
       </aside>
+
+      {/* Painel flutuante: abre por cima do portal sem sair da pagina atual
+          (Reuniao, Calculadora — paginas estaticas proprias, embutidas num iframe) */}
+      {panel && (
+        <div className="fixed inset-0 z-[70] flex justify-end">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPanel(null)} />
+          <div className="relative m-3 flex w-full max-w-[480px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-background shadow-2xl sm:m-4">
+            <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] bg-gradient-to-b from-surface to-background px-4 py-3">
+              <span className="text-sm font-bold text-foreground">{panel.label}</span>
+              <button
+                type="button"
+                onClick={() => setPanel(null)}
+                aria-label="Fechar"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-foreground"
+              >
+                <CloseIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <iframe src={panel.src} title={panel.label} className="min-h-0 flex-1 border-0" />
+          </div>
+        </div>
+      )}
     </>
   );
 }
