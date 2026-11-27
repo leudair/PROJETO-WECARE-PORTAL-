@@ -15,11 +15,11 @@
   --g-champagne: #e9b77a;
   --g-champagne-light: #f3d3a6;
   --g-mint: #9fe3b4;
-  --g-glass-1: rgba(255, 255, 255, 0.03);
-  --g-glass-2: rgba(255, 255, 255, 0.045);
-  --g-glass-3: rgba(255, 255, 255, 0.06);
-  --g-edge-1: rgba(255, 255, 255, 0.05);
-  --g-edge-2: rgba(255, 255, 255, 0.08);
+  --g-glass-1: rgba(255, 255, 255, 0.055);
+  --g-glass-2: rgba(255, 255, 255, 0.085);
+  --g-glass-3: rgba(255, 255, 255, 0.11);
+  --g-edge-1: rgba(255, 255, 255, 0.14);
+  --g-edge-2: rgba(255, 255, 255, 0.2);
   background: var(--g-page);
   color: var(--g-text);
   font-family: "Outfit Variable", "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -39,9 +39,9 @@
   margin-bottom: 26px;
 }
 .crm-head h1 {
-  font-weight: 300;
+  font-weight: 200;
   letter-spacing: -0.03em;
-  font-size: clamp(28px, 4vw, 44px);
+  font-size: clamp(30px, 4.4vw, 52px);
   margin: 0 0 6px;
   color: var(--g-text);
 }
@@ -62,8 +62,11 @@
 .crm-stat {
   position: relative;
   border-radius: 18px;
+  border: 1px solid var(--g-edge-1);
   background: linear-gradient(180deg, var(--g-glass-2), var(--g-glass-1));
-  box-shadow: inset 0 0 0 1px var(--g-edge-1), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
   padding: 14px 16px;
 }
 .crm-stat b {
@@ -100,8 +103,10 @@
   gap: 4px;
   padding: 5px;
   border-radius: 999px;
+  border: 1px solid var(--g-edge-1);
   background: var(--g-glass-1);
-  box-shadow: inset 0 0 0 1px var(--g-edge-1);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
 }
 .crm-pills button {
   border: 0;
@@ -137,9 +142,10 @@
   background: linear-gradient(135deg, var(--g-champagne-light), var(--g-champagne));
 }
 .crm-select {
-  border: 0;
+  border: 1px solid var(--g-edge-1);
   background: var(--g-glass-1);
-  box-shadow: inset 0 0 0 1px var(--g-edge-1);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
   color: var(--g-text);
   border-radius: 999px;
   padding: 9px 16px;
@@ -170,15 +176,29 @@
   }
 }
 
-/* Cada funil: painel de vidro grafite — só o pontinho de cor identifica a categoria */
+/* Cada funil: painel de vidro grafite com uma linha de assinatura champanhe no topo */
 .crm-col {
   position: relative;
-  border-radius: 22px;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid var(--g-edge-1);
   background: linear-gradient(180deg, var(--g-glass-2), var(--g-glass-1));
-  box-shadow: inset 0 0 0 1px var(--g-edge-1), inset 0 1px 0 rgba(255, 255, 255, 0.07),
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09),
     0 30px 60px -36px rgba(0, 0, 0, 0.8);
-  padding: 18px;
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  padding: 20px 18px 18px;
   min-height: 220px;
+}
+.crm-col::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18px;
+  right: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--g-champagne) 35%, var(--g-champagne-light) 50%, var(--g-champagne) 65%, transparent);
+  opacity: 0.55;
 }
 .crm-col-head {
   display: flex;
@@ -232,9 +252,8 @@
   gap: 4px;
 }
 .crm-col-days button {
-  border: 0;
+  border: 1px solid var(--g-edge-1);
   background: var(--g-glass-1);
-  box-shadow: inset 0 0 0 1px var(--g-edge-1);
   color: var(--g-text-dim);
   font-size: 11px;
   padding: 4px 9px;
@@ -307,8 +326,11 @@
   min-width: 0;
   padding: 14px 16px;
   border-radius: 16px;
+  border: 1px solid var(--g-edge-1);
   background: linear-gradient(180deg, var(--g-glass-2), var(--g-glass-1));
-  box-shadow: inset 0 0 0 1px var(--g-edge-1), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
   font-size: 13.5px;
   transition: box-shadow 0.3s, transform 0.3s, background 0.3s;
 }
