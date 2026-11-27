@@ -164,6 +164,51 @@ export interface Database {
           },
         ];
       };
+      reunioes: {
+        Row: {
+          id: string;
+          owner_id: string;
+          contact_id: string | null;
+          titulo: string;
+          data: string;
+          hora: string | null;
+          observacao: string | null;
+          status: string;
+          origem: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          contact_id?: string | null;
+          titulo: string;
+          data: string;
+          hora?: string | null;
+          observacao?: string | null;
+          status?: string;
+          origem?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["reunioes"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "reunioes_contact_id_fkey";
+            columns: ["contact_id"];
+            isOneToOne: false;
+            referencedRelation: "contacts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reunioes_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       // wa_funcionarios mora no sistema do WhatsApp (nao e' do Portal) — so os
       // campos que o Portal realmente le (ex: achar o telegram_chat_id de uma
       // vendedora pelo profile_id, no botao "Telegram" do /admin/crm).

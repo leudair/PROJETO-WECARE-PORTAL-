@@ -16,6 +16,7 @@ import {
   TelegramIcon,
 } from "@/components/icons";
 import { getEmployeeAiUrl, getEmployeeSiteUrl } from "@/lib/employee-site";
+import { ReuniaoPanel } from "./admin/reuniao/ReuniaoPanel";
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "CEO",
@@ -44,7 +45,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { href: "https://t.me/agenciawecare_bot", label: "Bot de avisos", icon: <TelegramIcon className="h-5 w-5" />, external: true },
     // Agente conectado na plataforma (selecionar clientes por criterio, ver vendas da IA, etc) — ainda nao existe.
     { href: "#", label: "Agente", icon: <AiIcon className="h-5 w-5" />, disabled: true },
-    { href: "/reuniao.html", label: "Reunião", icon: <MeetingIcon className="h-5 w-5" />, panel: "/reuniao.html" },
+    { href: "#", label: "Reunião", icon: <MeetingIcon className="h-5 w-5" />, panelContent: <ReuniaoPanel /> },
     { href: "/calculadora.html", label: "Calculadora", icon: <CalculatorIcon className="h-5 w-5" />, panel: "/calculadora.html" },
   ];
 
