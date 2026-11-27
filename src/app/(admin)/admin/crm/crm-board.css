@@ -1,5 +1,7 @@
-/* CRM da equipe — visual proprio (fundo preto, luz violeta, vidro), isolado
-   do resto do Portal. Tudo escopado dentro de .crm-board, nada vaza pra fora. */
+/* CRM da equipe — visual proprio (fundo preto, luz da marca WeCare, vidro),
+   isolado do resto do Portal. Tudo escopado dentro de .crm-board, nada vaza
+   pra fora. Paleta: vermelho rubi (#c41230) + dourado (#c9a227), igual ao
+   resto da marca, em vez do violeta generico do template de referencia. */
 
 .crm-board {
   position: relative;
@@ -7,9 +9,9 @@
   overflow: hidden;
   border-radius: 32px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: #040406;
+  background: #000000;
   color: #f5f5fa;
-  box-shadow: 0 40px 100px -40px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: 0 40px 100px -40px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   font-family: "Instrument Sans Variable", "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
@@ -29,14 +31,19 @@
 }
 
 .crm-head {
-  margin-bottom: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 .crm-head h1 {
   font-weight: 400;
   letter-spacing: -0.04em;
   font-size: clamp(28px, 4vw, 42px);
   margin: 0 0 6px;
-  background: linear-gradient(180deg, #fff, #c9beff);
+  background: linear-gradient(135deg, #fff, #f3d98a);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -45,6 +52,40 @@
   color: #a6a7ba;
   font-size: 14.5px;
   margin: 0;
+}
+
+/* Resumo cruzado: cliente/lead x Brasil/fora */
+.crm-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.crm-stat {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+  padding: 12px 14px;
+}
+.crm-stat b {
+  display: block;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+.crm-stat span {
+  font-size: 11.5px;
+  color: #a6a7ba;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+@media (max-width: 640px) {
+  .crm-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .crm-filters {
@@ -79,8 +120,8 @@
 }
 .crm-pills button.on {
   color: #fff;
-  background: linear-gradient(180deg, #6a5cff, #4a3aff);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 20px -4px rgba(106, 92, 255, 0.8);
+  background: linear-gradient(135deg, #c41230, #7e0a1f);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 20px -4px rgba(196, 18, 48, 0.8);
 }
 .crm-select {
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -170,11 +211,74 @@
 .crm-col-total {
   position: relative;
   z-index: 1;
-  margin: 0 0 14px;
+  margin: 0 0 10px;
   font-size: 13px;
   color: #a6a7ba;
   font-variant-numeric: tabular-nums;
 }
+
+/* Filtro de dias + botao do Telegram, no topo de cada funil */
+.crm-col-tools {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+  margin-bottom: 12px;
+}
+.crm-col-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.crm-col-days button {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: #a6a7ba;
+  font-size: 11px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
+}
+.crm-col-days button:hover {
+  color: #fff;
+}
+.crm-col-days button.on {
+  color: #fff;
+  border-color: color-mix(in srgb, var(--k) 60%, transparent);
+  background: color-mix(in srgb, var(--k) 25%, transparent);
+}
+.crm-telegram-btn {
+  align-self: flex-start;
+  border: 1px solid rgba(90, 170, 255, 0.4);
+  background: rgba(39, 159, 217, 0.18);
+  color: #bfe6ff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.2s, opacity 0.2s;
+}
+.crm-telegram-btn:hover {
+  background: rgba(39, 159, 217, 0.32);
+}
+.crm-telegram-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.crm-telegram-msg {
+  width: 100%;
+  font-size: 11px;
+  color: #a6a7ba;
+  margin: -4px 0 4px;
+}
+
 .crm-col-list {
   position: relative;
   z-index: 1;
@@ -205,7 +309,7 @@
   padding: 14px 16px;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(8, 8, 14, 0.6);
+  background: rgba(10, 10, 10, 0.72);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   font-size: 13.5px;
@@ -259,7 +363,7 @@
   white-space: nowrap;
 }
 .crm-card-row a {
-  color: #a996ff;
+  color: #e3c77a;
 }
 .crm-owner {
   color: #8788a0;

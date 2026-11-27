@@ -41,6 +41,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Abaixo do Radar, a pedido: CRM da equipe, com acesso de W1 ao ultimo W cadastrado.
     { href: "/admin/crm", label: "CRM da equipe", icon: <CrmIcon className="h-5 w-5" /> },
     { href: "https://t.me/agenciawecare_bot", label: "Bot de avisos", icon: <TelegramIcon className="h-5 w-5" />, external: true },
+    // Agente conectado na plataforma (selecionar clientes por criterio, ver vendas da IA, etc) — ainda nao existe.
+    { href: "#", label: "Agente", icon: <AiIcon className="h-5 w-5" />, disabled: true },
     { href: "#", label: "Reunião", icon: <MeetingIcon className="h-5 w-5" />, disabled: true },
   ];
 

@@ -27,6 +27,8 @@ export default async function FinanceLayout({ children }: { children: React.Reac
     ...(myAiUrl ? [{ href: myAiUrl, label: "Minha IA", icon: <AiIcon className="h-5 w-5" />, external: true }] : []),
     { href: "https://radar.portalwecare.com.br", label: "Radar", icon: <RadarIcon className="h-5 w-5" />, external: true },
     { href: "https://t.me/agenciawecare_bot", label: "Bot de avisos", icon: <TelegramIcon className="h-5 w-5" />, external: true },
+    // Agente conectado na plataforma (selecionar clientes por criterio, ver vendas da IA, etc) — ainda nao existe.
+    { href: "#", label: "Agente", icon: <AiIcon className="h-5 w-5" />, disabled: true },
     { href: "#", label: "Reunião", icon: <MeetingIcon className="h-5 w-5" />, disabled: true },
     { href: "#", label: "CRM", icon: <CrmIcon className="h-5 w-5" />, disabled: true },
   ];

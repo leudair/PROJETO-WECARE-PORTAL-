@@ -164,6 +164,27 @@ export interface Database {
           },
         ];
       };
+      // wa_funcionarios mora no sistema do WhatsApp (nao e' do Portal) — so os
+      // campos que o Portal realmente le (ex: achar o telegram_chat_id de uma
+      // vendedora pelo profile_id, no botao "Telegram" do /admin/crm).
+      wa_funcionarios: {
+        Row: {
+          id: number;
+          nome: string;
+          codigo: string | null;
+          profile_id: string | null;
+          telegram_chat_id: number | null;
+        };
+        Insert: {
+          id?: number;
+          nome: string;
+          codigo?: string | null;
+          profile_id?: string | null;
+          telegram_chat_id?: number | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["wa_funcionarios"]["Insert"]>;
+        Relationships: [];
+      };
       message_templates: {
         Row: {
           stage: number;
