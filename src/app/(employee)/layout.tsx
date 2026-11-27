@@ -26,7 +26,7 @@ export default async function EmployeeLayout({ children }: { children: React.Rea
     // Agente conectado na plataforma (selecionar clientes por criterio, ver vendas da IA, etc) — ainda nao existe.
     { href: "#", label: "Agente", icon: <AiIcon className="h-5 w-5" />, disabled: true },
     { href: "#", label: "Reunião", icon: <MeetingIcon className="h-5 w-5" />, disabled: true },
-    { href: "#", label: "CRM", icon: <CrmIcon className="h-5 w-5" />, disabled: true },
+    { href: "/crm", label: "CRM", icon: <CrmIcon className="h-5 w-5" /> },
   ];
 
   return (

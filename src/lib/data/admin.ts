@@ -5,6 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "./auth";
 import { todayInSaoPaulo } from "@/lib/date";
 import { DEFAULT_LEAD_INTEREST_VALUE } from "./contacts";
+import { CRM_HISTORICO_GRUPOS, type CrmHistoricoGrupo } from "./crm-shared";
+
+export { CRM_HISTORICO_GRUPOS, type CrmHistoricoGrupo };
 
 export type SummaryPeriod = "today" | "7d" | "all";
 
@@ -604,9 +607,6 @@ export async function listFaturamentoMensalEmpresa() {
 // data_referencia de cada vendedora (cada uma pode ter sido feita em dia
 // diferente). Hoje só W1 (com agenda do e-mail, alta confiança) e W11 (sem
 // agenda, só pelo nome salvo no WhatsApp, confiança menor) têm esses dados.
-export const CRM_HISTORICO_GRUPOS = ["cliente engajado", "cliente parado", "lead engajado", "lead não engajado"] as const;
-export type CrmHistoricoGrupo = (typeof CRM_HISTORICO_GRUPOS)[number];
-
 export async function listVendedorasComCrmOrganizado() {
   await requireAdmin();
   const supabase = await createClient();
