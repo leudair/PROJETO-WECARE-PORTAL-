@@ -3,6 +3,7 @@ import { logout } from "@/app/logout-action";
 import { Sidebar, type SidebarNavItem } from "@/components/sidebar";
 import {
   AiIcon,
+  CalculatorIcon,
   CrmIcon,
   MeetingIcon,
   OverviewIcon,
@@ -44,6 +45,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // Agente conectado na plataforma (selecionar clientes por criterio, ver vendas da IA, etc) — ainda nao existe.
     { href: "#", label: "Agente", icon: <AiIcon className="h-5 w-5" />, disabled: true },
     { href: "/reuniao.html", label: "Reunião", icon: <MeetingIcon className="h-5 w-5" />, external: true },
+    { href: "/calculadora.html", label: "Calculadora", icon: <CalculatorIcon className="h-5 w-5" />, external: true },
   ];
 
   return (
