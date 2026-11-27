@@ -1,14 +1,29 @@
-/* CRM da equipe — visual proprio (preto puro + vidro fosco), isolado do
-   resto do Portal. Tudo escopado dentro de .crm-board, nada vaza pra fora.
-   Sem gradiente nem glow colorido no fundo — só preto normal, pra "conectar"
-   visualmente com o menu lateral, que já é bem escuro. */
+/* CRM da equipe — visual "Graphite" (inspirado no template Haelith da UberDesigner):
+   grafite/preto quase puro, vidro fosco, tipografia Outfit + Geist Mono, um único
+   acento champanhe e um verde-menta pra valores positivos. Tudo escopado dentro de
+   .crm-board, nada vaza pra fora. Zero mudança de dado/estrutura — só estilo. */
 
 .crm-board {
   position: relative;
   isolation: isolate;
-  background: #000000;
-  color: #f5f5fa;
-  font-family: "Instrument Sans Variable", "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --g-page: #050608;
+  --g-ink: #0c0d11;
+  --g-text: #eef0f5;
+  --g-text-soft: #c9ccd5;
+  --g-text-dim: #9da2ae;
+  --g-text-faint: #6b7080;
+  --g-champagne: #e9b77a;
+  --g-champagne-light: #f3d3a6;
+  --g-mint: #9fe3b4;
+  --g-glass-1: rgba(255, 255, 255, 0.055);
+  --g-glass-2: rgba(255, 255, 255, 0.085);
+  --g-glass-3: rgba(255, 255, 255, 0.11);
+  --g-edge-1: rgba(255, 255, 255, 0.14);
+  --g-edge-2: rgba(255, 255, 255, 0.2);
+  background: var(--g-page);
+  color: var(--g-text);
+  font-family: "Outfit Variable", "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-weight: 400;
 }
 
 .crm-board-in {
@@ -21,19 +36,20 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 26px;
 }
 .crm-head h1 {
-  font-weight: 400;
-  letter-spacing: -0.04em;
-  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 200;
+  letter-spacing: -0.03em;
+  font-size: clamp(30px, 4.4vw, 52px);
   margin: 0 0 6px;
-  color: #fff;
+  color: var(--g-text);
 }
 .crm-head p {
-  color: #8a8a94;
-  font-size: 14.5px;
+  color: var(--g-text-dim);
+  font-size: 14px;
   margin: 0;
+  font-family: "Geist Mono", monospace;
 }
 
 /* Resumo cruzado: cliente/lead x Brasil/fora */
@@ -45,26 +61,28 @@
 }
 .crm-stat {
   position: relative;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--g-edge-1);
+  background: linear-gradient(180deg, var(--g-glass-2), var(--g-glass-1));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  padding: 14px 16px;
 }
 .crm-stat b {
   display: block;
-  font-size: 22px;
-  font-weight: 400;
-  letter-spacing: -0.03em;
+  font-size: 24px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  font-family: "Geist Mono", monospace;
+  color: var(--g-text);
 }
 .crm-stat span {
-  font-size: 11.5px;
-  color: #8a8a94;
+  font-size: 11px;
+  color: var(--g-text-faint);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
 }
 @media (max-width: 640px) {
   .crm-stats {
@@ -77,7 +95,7 @@
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
-  margin-bottom: 26px;
+  margin-bottom: 28px;
 }
 .crm-pills {
   display: flex;
@@ -85,15 +103,15 @@
   gap: 4px;
   padding: 5px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--g-edge-1);
+  background: var(--g-glass-1);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
 }
 .crm-pills button {
   border: 0;
   background: none;
-  color: #8a8a94;
+  color: var(--g-text-dim);
   font-size: 13px;
   padding: 7px 14px;
   border-radius: 999px;
@@ -102,31 +120,37 @@
   font-family: inherit;
 }
 .crm-pills button:hover {
-  color: #fff;
+  color: var(--g-text);
 }
 .crm-pills button.on {
-  color: #000;
-  background: #fff;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+  color: var(--g-ink);
+  background: var(--g-text);
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.6);
 }
 .crm-pills-flags button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  font-family: "Geist Mono", monospace;
 }
 .crm-pills-flags button b {
   font-weight: 500;
   font-size: 11px;
   opacity: 0.8;
 }
+.crm-pills-flags button.on {
+  background: linear-gradient(135deg, var(--g-champagne-light), var(--g-champagne));
+}
 .crm-select {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  color: #f5f5fa;
+  border: 1px solid var(--g-edge-1);
+  background: var(--g-glass-1);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  color: var(--g-text);
   border-radius: 999px;
   padding: 9px 16px;
   font-size: 13px;
-  font-family: inherit;
+  font-family: "Geist Mono", monospace;
   cursor: pointer;
 }
 
@@ -152,16 +176,29 @@
   }
 }
 
-/* Cada funil: vidro fosco branco sobre preto — só o pontinho de cor identifica a categoria */
+/* Cada funil: painel de vidro grafite com uma linha de assinatura champanhe no topo */
 .crm-col {
   position: relative;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.035);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  padding: 18px;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid var(--g-edge-1);
+  background: linear-gradient(180deg, var(--g-glass-2), var(--g-glass-1));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 30px 60px -36px rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  padding: 20px 18px 18px;
   min-height: 220px;
+}
+.crm-col::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 18px;
+  right: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--g-champagne) 35%, var(--g-champagne-light) 50%, var(--g-champagne) 65%, transparent);
+  opacity: 0.55;
 }
 .crm-col-head {
   display: flex;
@@ -169,7 +206,7 @@
   gap: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: #fff;
+  color: var(--g-text);
   margin-bottom: 4px;
 }
 .crm-col-head i {
@@ -189,14 +226,16 @@
   margin-left: auto;
   flex: none;
   font-weight: 400;
-  color: #8a8a94;
+  color: var(--g-text-faint);
   font-size: 13px;
+  font-family: "Geist Mono", monospace;
 }
 .crm-col-total {
   margin: 0 0 10px;
   font-size: 13px;
-  color: #8a8a94;
+  color: var(--g-text-dim);
   font-variant-numeric: tabular-nums;
+  font-family: "Geist Mono", monospace;
 }
 
 /* Filtro de dias + botao do Telegram, no topo de cada funil */
@@ -213,28 +252,29 @@
   gap: 4px;
 }
 .crm-col-days button {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  color: #8a8a94;
+  border: 1px solid var(--g-edge-1);
+  background: var(--g-glass-1);
+  color: var(--g-text-dim);
   font-size: 11px;
   padding: 4px 9px;
   border-radius: 999px;
   cursor: pointer;
-  font-family: inherit;
-  transition: color 0.2s, background 0.2s, border-color 0.2s;
+  font-family: "Geist Mono", monospace;
+  transition: color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 .crm-col-days button:hover {
-  color: #fff;
+  color: var(--g-text);
 }
 .crm-col-days button.on {
-  color: #000;
-  background: #fff;
+  color: var(--g-ink);
+  background: var(--g-text);
 }
 .crm-telegram-btn {
   align-self: flex-start;
-  border: 1px solid rgba(90, 170, 255, 0.4);
-  background: rgba(39, 159, 217, 0.18);
-  color: #bfe6ff;
+  border: 0;
+  background: rgba(233, 183, 122, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(233, 183, 122, 0.4);
+  color: var(--g-champagne-light);
   font-size: 11px;
   font-weight: 500;
   padding: 4px 10px;
@@ -245,16 +285,16 @@
   transition: background 0.2s, opacity 0.2s;
 }
 .crm-telegram-btn:hover {
-  background: rgba(39, 159, 217, 0.32);
+  background: rgba(233, 183, 122, 0.24);
 }
 .crm-telegram-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 .crm-telegram-msg {
   width: 100%;
   font-size: 11px;
-  color: #8a8a94;
+  color: var(--g-text-dim);
   margin: -4px 0 4px;
 }
 
@@ -270,28 +310,29 @@
   width: 6px;
 }
 .crm-col-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--g-edge-2);
   border-radius: 99px;
 }
 .crm-empty {
-  color: #5c5c64;
+  color: var(--g-text-faint);
   font-size: 13px;
   text-align: center;
   padding: 24px 0;
 }
 
-/* Card: vidro branco translucido sobre preto, com uma luz sutil seguindo o cursor */
+/* Card: vidro grafite com uma luz champanhe sutil seguindo o cursor */
 .crm-card {
   position: relative;
   min-width: 0;
   padding: 14px 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.045);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  border-radius: 16px;
+  border: 1px solid var(--g-edge-1);
+  background: linear-gradient(180deg, var(--g-glass-2), var(--g-glass-1));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
   font-size: 13.5px;
-  transition: border-color 0.3s, transform 0.3s, background 0.3s;
+  transition: box-shadow 0.3s, transform 0.3s, background 0.3s;
 }
 .crm-card::before {
   content: "";
@@ -300,7 +341,7 @@
   border-radius: inherit;
   padding: 1px;
   pointer-events: none;
-  background: radial-gradient(160px circle at var(--mx, 50%) var(--my, 0%), rgba(255, 255, 255, 0.9), transparent 65%);
+  background: radial-gradient(160px circle at var(--mx, 50%) var(--my, 0%), rgba(243, 211, 166, 0.85), transparent 65%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -308,11 +349,11 @@
   transition: opacity 0.4s;
 }
 .crm-card:hover::before {
-  opacity: 0.5;
+  opacity: 0.55;
 }
 .crm-card:hover {
   transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.065);
+  background: linear-gradient(180deg, var(--g-glass-3), var(--g-glass-2));
 }
 .crm-card-top {
   display: flex;
@@ -323,7 +364,7 @@
 }
 .crm-card-top b {
   font-weight: 500;
-  color: #fff;
+  color: var(--g-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -333,8 +374,9 @@
   justify-content: space-between;
   gap: 8px;
   font-size: 12.5px;
-  color: #a0a0a8;
+  color: var(--g-text-soft);
   margin-top: 2px;
+  font-family: "Geist Mono", monospace;
 }
 .crm-card-row > * {
   min-width: 0;
@@ -343,22 +385,23 @@
   white-space: nowrap;
 }
 .crm-card-row a {
-  color: #fff;
+  color: var(--g-text);
   text-decoration: underline;
-  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-decoration-color: rgba(255, 255, 255, 0.3);
 }
 .crm-owner {
-  color: #8a8a94;
+  color: var(--g-text-faint);
   flex: none;
   max-width: 50%;
+  font-family: "Outfit Variable", "Outfit", sans-serif;
 }
 .crm-value {
-  color: #9ef5c4;
+  color: var(--g-mint);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 .crm-dim {
-  color: #5c5c64;
+  color: var(--g-text-faint);
 }
 .crm-chips {
   display: flex;
@@ -370,14 +413,15 @@
   font-size: 11px;
   padding: 3px 9px;
   border-radius: 99px;
-  background: rgba(255, 255, 255, 0.09);
-  color: #d4d4db;
+  background: var(--g-glass-3);
+  color: var(--g-text-soft);
+  font-family: "Outfit Variable", "Outfit", sans-serif;
 }
 .crm-note {
   margin: 8px 0 0;
   font-size: 12px;
-  color: #8a8a94;
-  border-top: 1px dashed rgba(255, 255, 255, 0.14);
+  color: var(--g-text-dim);
+  border-top: 1px dashed var(--g-edge-1);
   padding-top: 8px;
   overflow: hidden;
   display: -webkit-box;

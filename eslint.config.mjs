@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Compiled bundle of the "Reunião" static page (Vite build output served as-is from public/)
+    "public/assets/**",
   ]),
 ]);
 
