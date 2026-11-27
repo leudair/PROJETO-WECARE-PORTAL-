@@ -332,10 +332,14 @@ export async function listCrmBoard() {
   if (contactsError) throw contactsError;
   if (ownersError) throw ownersError;
 
-  const contactIds = contacts.map((c) => c.id);
-  const { data: notes, error: notesError } = contactIds.length
-    ? await supabase.from("contact_notes").select("*").in("contact_id", contactIds).order("created_at", { ascending: false })
-    : { data: [], error: null };
+  // Nota: busca TODAS as notas em vez de filtrar por .in(contactIds) — o
+  // board pode trazer mais de mil contatos, e um .in() com tantos ids gera
+  // uma URL longa demais e o PostgREST responde 400 (foi o que quebrou a
+  // tela em produção). A tabela contact_notes é pequena, então não pesa.
+  const { data: notes, error: notesError } = await supabase
+    .from("contact_notes")
+    .select("*")
+    .order("created_at", { ascending: false });
   if (notesError) throw notesError;
 
   const ownerById = new Map(owners.map((o) => [o.id, o.full_name]));
