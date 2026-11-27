@@ -184,7 +184,7 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["faturamento_mensal_empresa"]["Insert"]>;
         Relationships: [];
       };
-      crm_classificacao_w1: {
+      crm_classificacao: {
         Row: {
           chave: string;
           codigo_vendedora: string;
@@ -225,7 +225,7 @@ export interface Database {
           data_referencia: string;
           created_at?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["crm_classificacao_w1"]["Insert"]>;
+        Update: Partial<Database["public"]["Tables"]["crm_classificacao"]["Insert"]>;
         Relationships: [];
       };
       reunioes: {
