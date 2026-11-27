@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import GlowCanvas from "./GlowCanvas";
 import { sendCrmTelegramBlast } from "./actions";
 
 type Card = {
@@ -13,7 +12,9 @@ type Card = {
   value: number | null;
   referenceDate: string;
   tags: string[];
-  pais: "brasil" | "fora";
+  pais: string;
+  bandeira: string;
+  europa: boolean;
   note: string | null;
 };
 
@@ -61,7 +62,7 @@ function CardTile({ card, color }: { card: Card; color: string }) {
     <div className="crm-card" ref={ref} onPointerMove={onMove} style={{ "--k": color } as React.CSSProperties}>
       <div className="crm-card-top">
         <b>{card.name || card.phone}</b>
-        <span className="crm-flag">{card.pais === "brasil" ? "🇧🇷" : "🌍"}</span>
+        <span className="crm-flag" title={card.pais}>{card.bandeira}</span>
       </div>
       <div className="crm-card-row">
         <a href={whatsapp(card.phone)} target="_blank" rel="noreferrer">{card.phone}</a>
@@ -117,7 +118,6 @@ function ColumnBlock({
 
   return (
     <div className="crm-col" style={{ "--k": col.color } as React.CSSProperties}>
-      <div className="crm-col-glow" />
       <header className="crm-col-head">
         <i />
         <span>{col.label}</span>
@@ -171,6 +171,21 @@ export default function CrmBoard({ columns, stats }: { columns: Column[]; stats:
     return Array.from(set).sort().reverse();
   }, [columns]);
 
+  // bandeiras com contagem, da maior pra menor — clica numa e filtra o board por aquele pais especifico
+  const paisesOptions = useMemo(() => {
+    const map = new Map<string, { nome: string; bandeira: string; count: number }>();
+    let europaCount = 0;
+    columns.forEach((c) =>
+      c.cards.forEach((card) => {
+        const atual = map.get(card.pais) ?? { nome: card.pais, bandeira: card.bandeira, count: 0 };
+        atual.count++;
+        map.set(card.pais, atual);
+        if (card.europa) europaCount++;
+      })
+    );
+    return { paises: Array.from(map.values()).sort((a, b) => b.count - a.count), europaCount };
+  }, [columns]);
+
   const filtered = useMemo(
     () =>
       columns.map((col) => ({
@@ -178,7 +193,7 @@ export default function CrmBoard({ columns, stats }: { columns: Column[]; stats:
         cards: col.cards.filter(
           (c) =>
             (owner === "todas" || c.ownerId === owner) &&
-            (pais === "todos" || c.pais === pais) &&
+            (pais === "todos" || (pais === "europa" ? c.europa : c.pais === pais)) &&
             (month === "todos" || c.referenceDate.startsWith(month))
         ),
       })),
@@ -201,7 +216,6 @@ export default function CrmBoard({ columns, stats }: { columns: Column[]; stats:
 
   return (
     <div className="crm-board">
-      <GlowCanvas />
       <div className="crm-board-in">
         <header className="crm-head">
           <div>
@@ -224,10 +238,18 @@ export default function CrmBoard({ columns, stats }: { columns: Column[]; stats:
               <button key={id} type="button" className={owner === id ? "on" : ""} onClick={() => setOwner(id)}>{name}</button>
             ))}
           </div>
-          <div className="crm-pills">
+          <div className="crm-pills crm-pills-flags">
             <button type="button" className={pais === "todos" ? "on" : ""} onClick={() => setPais("todos")}>Todos os países</button>
-            <button type="button" className={pais === "brasil" ? "on" : ""} onClick={() => setPais("brasil")}>🇧🇷 Brasil</button>
-            <button type="button" className={pais === "fora" ? "on" : ""} onClick={() => setPais("fora")}>🌍 Fora do país</button>
+            {paisesOptions.europaCount > 0 && (
+              <button type="button" className={pais === "europa" ? "on" : ""} onClick={() => setPais("europa")} title="Toda a Europa">
+                🇪🇺 Europa <b>{paisesOptions.europaCount}</b>
+              </button>
+            )}
+            {paisesOptions.paises.map((p) => (
+              <button key={p.nome} type="button" className={pais === p.nome ? "on" : ""} onClick={() => setPais(p.nome)} title={p.nome}>
+                {p.bandeira} <b>{p.count}</b>
+              </button>
+            ))}
           </div>
           {months.length > 0 && (
             <select className="crm-select" value={month} onChange={(e) => setMonth(e.target.value)}>
