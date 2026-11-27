@@ -1,4 +1,6 @@
-import "@fontsource-variable/instrument-sans/wght.css";
+import "@fontsource-variable/outfit/wght.css";
+import "@fontsource/geist-mono/400.css";
+import "@fontsource/geist-mono/500.css";
 import "./crm-board.css";
 import { listCrmBoard } from "@/lib/data/admin";
 import CrmBoard from "./CrmBoard";
