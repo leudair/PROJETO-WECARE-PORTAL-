@@ -4,6 +4,6 @@ import { listCrmBoard } from "@/lib/data/admin";
 import CrmBoard from "./CrmBoard";
 
 export default async function CrmPage() {
-  const { columns } = await listCrmBoard();
-  return <CrmBoard columns={columns} />;
+  const { columns, stats } = await listCrmBoard();
+  return <CrmBoard columns={columns} stats={stats} />;
 }

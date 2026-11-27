@@ -12,6 +12,8 @@ float n2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h21(i
 float fbm(vec2 p){float a=.5,s=0.;for(int i=0;i<4;i++){s+=a*n2(p);p=p*2.03+17.;a*=.5;}return s;}
 `;
 
+// Cores da marca WeCare (vermelho rubi + dourado) em vez do violeta genérico
+// do template original — mesma técnica, paleta nossa.
 const FRAG = `uniform vec2 R;uniform float T;uniform vec2 M;
 void main(){
   vec2 uv = gl_FragCoord.xy / R;
@@ -21,8 +23,8 @@ void main(){
   vec2 d2 = p - vec2(.4 + .08 * sin(T * .09), .55);
   float g1 = exp(-dot(d1, d1) * 2.4) * (.6 + .5 * fog);
   float g2 = exp(-dot(d2, d2) * 3.1) * (.5 + .4 * fog);
-  vec3 col = vec3(.32, .26, 1.) * g1 * 1.1 + vec3(.55, .3, .95) * g2 * .85;
-  col = 1. - exp(-col * 1.25);
+  vec3 col = vec3(.77, .07, .19) * g1 * 1.1 + vec3(.79, .64, .15) * g2 * .7;
+  col = 1. - exp(-col * 1.1);
   col += (h21(p * R + fract(T) * 71.) - .5) * .035;
   gl_FragColor = vec4(col, 1.);
 }`;

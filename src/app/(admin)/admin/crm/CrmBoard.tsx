@@ -2,11 +2,13 @@
 
 import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import GlowCanvas from "./GlowCanvas";
+import { sendCrmTelegramBlast } from "./actions";
 
 type Card = {
   id: string;
   name: string;
   phone: string;
+  ownerId: string;
   ownerName: string;
   value: number | null;
   referenceDate: string;
@@ -23,6 +25,10 @@ type Column = {
   cards: Card[];
 };
 
+type Stats = { clienteBrasil: number; clienteFora: number; leadBrasil: number; leadFora: number };
+
+const DIAS_OPCOES = [5, 10, 15, 30] as const;
+
 const formatCurrency = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const formatDate = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString("pt-BR");
 const whatsapp = (tel: string) => `https://wa.me/${tel.replace(/\D/g, "")}`;
@@ -31,6 +37,14 @@ function monthLabel(key: string) {
   const [y, m] = key.split("-");
   const nome = new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
   return nome.charAt(0).toUpperCase() + nome.slice(1);
+}
+
+// quantos dias faz desde referenceDate ate hoje (so data, sem hora)
+function diasAtras(iso: string) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const d = new Date(`${iso}T00:00:00`);
+  return Math.round((hoje.getTime() - d.getTime()) / 86400000);
 }
 
 function CardTile({ card, color }: { card: Card; color: string }) {
@@ -67,16 +81,88 @@ function CardTile({ card, color }: { card: Card; color: string }) {
   );
 }
 
-export default function CrmBoard({ columns }: { columns: Column[] }) {
+function ColumnBlock({
+  col,
+  owner,
+}: {
+  col: Column;
+  owner: string;
+}) {
+  const [dias, setDias] = useState<number | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const cards = dias == null ? col.cards : col.cards.filter((c) => diasAtras(c.referenceDate) <= dias);
+  const total = cards.reduce((n, c) => n + (c.value ?? 0), 0);
+  // o botao do Telegram so faz sentido com UMA vendedora selecionada (senao nao da pra saber pra qual bot mandar)
+  const podeEnviar = owner !== "todas" && dias != null && cards.length > 0;
+
+  async function enviarTelegram() {
+    if (!podeEnviar) return;
+    setEnviando(true);
+    setMsg(null);
+    try {
+      const r = await sendCrmTelegramBlast(
+        cards[0].ownerId,
+        `${col.label} — últimos ${dias} dias`,
+        cards.map((c) => ({ name: c.name, phone: c.phone, value: c.value }))
+      );
+      setMsg(`Enviado pro Telegram da ${r.vendedora} (${r.enviados}).`);
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Erro ao enviar.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <div className="crm-col" style={{ "--k": col.color } as React.CSSProperties}>
+      <div className="crm-col-glow" />
+      <header className="crm-col-head">
+        <i />
+        <span>{col.label}</span>
+        <b>{cards.length}</b>
+      </header>
+      {total > 0 && <p className="crm-col-total">{formatCurrency(total)}</p>}
+
+      <div className="crm-col-tools">
+        <div className="crm-col-days">
+          <button type="button" className={dias == null ? "on" : ""} onClick={() => setDias(null)}>
+            Tudo
+          </button>
+          {DIAS_OPCOES.map((d) => (
+            <button key={d} type="button" className={dias === d ? "on" : ""} onClick={() => setDias(d)}>
+              {d}d
+            </button>
+          ))}
+        </div>
+        <button type="button" className="crm-telegram-btn" disabled={!podeEnviar || enviando} onClick={enviarTelegram} title={owner === "todas" ? "Selecione uma vendedora primeiro" : undefined}>
+          {enviando ? "Enviando…" : "📨 Telegram"}
+        </button>
+      </div>
+      {msg && <p className="crm-telegram-msg">{msg}</p>}
+
+      <div className="crm-col-list">
+        {cards.length === 0 ? (
+          <p className="crm-empty">Nenhum contato aqui com esse filtro.</p>
+        ) : (
+          cards.map((card) => <CardTile key={card.id} card={card} color={col.color} />)
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function CrmBoard({ columns, stats }: { columns: Column[]; stats: Stats }) {
   const [owner, setOwner] = useState("todas");
   const [pais, setPais] = useState("todos");
   const [month, setMonth] = useState("todos");
   const tiltRef = useRef<HTMLDivElement>(null);
 
   const owners = useMemo(() => {
-    const set = new Set<string>();
-    columns.forEach((c) => c.cards.forEach((card) => set.add(card.ownerName)));
-    return Array.from(set).sort();
+    const map = new Map<string, string>();
+    columns.forEach((c) => c.cards.forEach((card) => map.set(card.ownerId, card.ownerName)));
+    return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [columns]);
 
   const months = useMemo(() => {
@@ -91,7 +177,7 @@ export default function CrmBoard({ columns }: { columns: Column[] }) {
         ...col,
         cards: col.cards.filter(
           (c) =>
-            (owner === "todas" || c.ownerName === owner) &&
+            (owner === "todas" || c.ownerId === owner) &&
             (pais === "todos" || c.pais === pais) &&
             (month === "todos" || c.referenceDate.startsWith(month))
         ),
@@ -118,15 +204,24 @@ export default function CrmBoard({ columns }: { columns: Column[] }) {
       <GlowCanvas />
       <div className="crm-board-in">
         <header className="crm-head">
-          <h1>CRM da equipe</h1>
-          <p>De W1 ao último W cadastrado — {totalCards} contato{totalCards === 1 ? "" : "s"} no board agora.</p>
+          <div>
+            <h1>CRM da equipe</h1>
+            <p>De W1 ao último W cadastrado — {totalCards} contato{totalCards === 1 ? "" : "s"} no board agora.</p>
+          </div>
         </header>
+
+        <div className="crm-stats">
+          <div className="crm-stat"><b>{stats.clienteBrasil}</b><span>Clientes Brasil</span></div>
+          <div className="crm-stat"><b>{stats.clienteFora}</b><span>Clientes fora do país</span></div>
+          <div className="crm-stat"><b>{stats.leadBrasil}</b><span>Leads Brasil</span></div>
+          <div className="crm-stat"><b>{stats.leadFora}</b><span>Leads fora do país</span></div>
+        </div>
 
         <div className="crm-filters">
           <div className="crm-pills">
             <button type="button" className={owner === "todas" ? "on" : ""} onClick={() => setOwner("todas")}>Todas</button>
-            {owners.map((o) => (
-              <button key={o} type="button" className={owner === o ? "on" : ""} onClick={() => setOwner(o)}>{o}</button>
+            {owners.map(([id, name]) => (
+              <button key={id} type="button" className={owner === id ? "on" : ""} onClick={() => setOwner(id)}>{name}</button>
             ))}
           </div>
           <div className="crm-pills">
@@ -144,27 +239,9 @@ export default function CrmBoard({ columns }: { columns: Column[] }) {
 
         <div className="crm-tilt" onPointerMove={onBoardMove} onPointerLeave={onBoardLeave}>
           <div className="crm-kanban" ref={tiltRef}>
-            {filtered.map((col) => {
-              const total = col.cards.reduce((n, c) => n + (c.value ?? 0), 0);
-              return (
-                <div key={col.key} className="crm-col" style={{ "--k": col.color } as React.CSSProperties}>
-                  <div className="crm-col-glow" />
-                  <header className="crm-col-head">
-                    <i />
-                    <span>{col.label}</span>
-                    <b>{col.cards.length}</b>
-                  </header>
-                  {total > 0 && <p className="crm-col-total">{formatCurrency(total)}</p>}
-                  <div className="crm-col-list">
-                    {col.cards.length === 0 ? (
-                      <p className="crm-empty">Nenhum contato aqui com esse filtro.</p>
-                    ) : (
-                      col.cards.map((card) => <CardTile key={card.id} card={card} color={col.color} />)
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {filtered.map((col) => (
+              <ColumnBlock key={col.key} col={col} owner={owner} />
+            ))}
           </div>
         </div>
       </div>

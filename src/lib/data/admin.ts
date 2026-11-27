@@ -350,10 +350,12 @@ export async function listCrmBoard() {
     id: contact.id,
     name: contact.name,
     phone: contact.phone,
+    ownerId: contact.owner_id,
     ownerName: ownerById.get(contact.owner_id) ?? "—",
     value: contact.contact_type === "cliente" ? contact.last_purchase_value : contact.lead_interest_value,
     referenceDate: contact.next_contact_date,
     tags: contact.tags,
+    contactType: contact.contact_type,
     pais: (contact.phone.startsWith("+55") ? "brasil" : "fora") as "brasil" | "fora",
     note: latestNoteByContact.get(contact.id) ?? null,
   }));
@@ -363,7 +365,18 @@ export async function listCrmBoard() {
     cards: cards.filter((c) => c.tags.includes(col.tag)).sort((a, b) => a.referenceDate.localeCompare(b.referenceDate)),
   }));
 
-  return { columns };
+  // Resumo cruzado (tipo x país) pra mostrar no topo do board — conta cada
+  // contato uma vez só, mesmo que ele apareça em mais de uma coluna.
+  const vistos = new Set<string>();
+  const stats = { clienteBrasil: 0, clienteFora: 0, leadBrasil: 0, leadFora: 0 };
+  for (const c of cards) {
+    if (vistos.has(c.id)) continue;
+    vistos.add(c.id);
+    const chave = c.contactType === "cliente" ? (c.pais === "brasil" ? "clienteBrasil" : "clienteFora") : c.pais === "brasil" ? "leadBrasil" : "leadFora";
+    stats[chave]++;
+  }
+
+  return { columns, stats };
 }
 
 export async function listEmployees() {
